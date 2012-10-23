@@ -65,7 +65,10 @@ def LoadStateRaw(filename, N, dim, time=None, dtype='float64', hastimes=True):
         dtype = numpy.dtype(dtype)
     elemsize = dtype.itemsize
     datasize = 9*(N**dim)
-    file = open(filename, 'rb')
+    if isinstance(filename, str):
+        file = open(filename, 'rb')
+    else:
+        file = filename
     file.seek(0,2)
     file_size = int(file.tell() / (elemsize*(datasize+1)))
     cnt = file_size
