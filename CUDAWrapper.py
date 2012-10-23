@@ -4,6 +4,9 @@ import os, re
 
 #=====================================================
 # small helper functions
+def array_to_carray(arr):
+    return repr(arr).replace("array", "").replace("(","").replace(")","").replace("[","{").replace("]","}").replace("\n","").replace(" ","") 
+
 def get_extension(filename):
     return os.path.splitext(filename)[1]
 
@@ -13,7 +16,7 @@ def open_if_not(filename, mode):
     else
         return open(filename, mode)
 
-def write_json_to_h(json, headername):
+def write_json_to_h(dct, headername):
     dct = simplejson.loads(json)
     
     headerfile = open_if_not(headername, "w")
@@ -56,6 +59,36 @@ def tar_getfile(tar, extension):
             return tar.extractfile(mem)
 
 
+#==========================================================
+# creates json configurations for simulations
+class CUDAConfiguration(object):
+    def __init__(N, dim):
+        self.dct = {"N": N}
+        self.dct.update({"CFLsafeFactor": 0.5})
+        if dim == 3:
+            self.dct.update({"DIMENSION3":""})
+
+    def load(direction, rate, start=0.0):
+        self.dct.update({"LOADING": ""})
+        self.dct.update({"LOAD_DEF": array_to_carray(direction)})
+        self.dct.update({"LOADING_RATE": rate})
+        self.dct.update({"LOAD_START": start})
+
+    def dynamics(dyn):
+        if dyn == "gcd":
+            self.dct.update({"lambda": 0})
+        if dyn == "mdp":
+            self.dct.update({"lambda": 1})
+        if dyn == "lvp":
+            self.dct.update({"lambda": 0})
+            self.dct.update({"NEWGLIDEONLY", ""})
+       
+    def dynamic_nucleation(dn=True):
+        if dn == True:
+            self.dct.update({"DYNAMIC_NUCLEATION", ""})
+
+
+
 #===========================================================
 # these are the interesting functions
 def LoadState(file, time=None):
@@ -65,6 +98,5 @@ def LoadState(file, time=None):
     t,s = FieldInitializer.LoadStateRaw(tar_getfile(tar, ".plas"), js_N(dct), js_dim(dct), time=time)
     tar.close()
     return t,s
-
 
 
