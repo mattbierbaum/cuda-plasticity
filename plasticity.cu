@@ -99,9 +99,9 @@ runTest(int argc, char** argv)
 
     double time = 0.;
 #ifndef LENGTHSCALE
-    sprintf(output_fn, FILE_PREFIX FILE_PREFIX2  "cuda_" RUN_DESC "_%d_" PRECISION_STR "_%d_L%d.plas", N, seed, lambda);
+    sprintf(output_fn, FILE_OUTPUT , N, seed, lambda);
 #else
-    sprintf(output_fn, FILE_PREFIX FILE_PREFIX2  "cuda_" RUN_DESC "_%d_" PRECISION_STR "_%d_L%d_l%.2f.plas", N, seed, lambda, lengthscale);
+    sprintf(output_fn, FILE_OUTPUT , N, seed, lambda, lengthscale);
 #endif
 
 #ifdef CONTINUE_RUN
@@ -126,15 +126,15 @@ runTest(int argc, char** argv)
     // Load from relaxed or initialized file for runs
 #ifdef LOADING
         data_type * matrix;
-        sprintf(input_fn, FILE_PREFIX FILE_PREFIX2 "cuda_" RELAX_RUN_DESC "_%d_" PRECISION_STR "_%d_L%d.plas", N, seed, lambda);
+        sprintf(input_fn, FILE_INPUT , N, seed, lambda);
         matrix = ReadMatrixFileFunc(input_fn, width, breadth*height*NUM_COMP, 1, if_quiet);
 #else
         double * matrix;
         //float * matrix;
 #ifndef LENGTHSCALE
-        sprintf(input_fn, FILE_PREFIX FILE_PREFIX2 "initial_%d_%d.mat", N, seed);
+        sprintf(input_fn, FILE_INPUT , N, seed);
 #else
-        sprintf(input_fn, FILE_PREFIX FILE_PREFIX2 "initial_%d_%d_L%.2f.mat", N, seed, lengthscale);
+        sprintf(input_fn, FILE_INPUT , N, seed, lengthscale);
 #endif
         matrix = ReadDoubleMatrixFile(input_fn, width, breadth*height*NUM_COMP, 0, if_quiet);
 #endif
@@ -146,9 +146,9 @@ runTest(int argc, char** argv)
     double timeInc = 0.01;
 
 #ifdef LOADING
-    double endTime = 3.00/LOADING_RATE;
+    double endTime = TIME_FINAL;//TIME_FINAL/fabs(LOADING_RATE);
 #else
-    double endTime = 20.00;
+    double endTime = TIME_FINAL; 
 #endif
     FILE *data_fp = OpenFile(output_fn, 
 #ifdef CONTINUE_RUN
@@ -208,15 +208,12 @@ runTest(int argc, char** argv)
 
     printf("  Allocate device memory for results.\n");
 
-    // FIXME - These lines maybe allocating unused memory
-    /*
     CUDA_SAFE_CALL(cudaMalloc((void**) &deviceSigma, mem_size));
     cudaMemset(deviceSigma, 0, mem_size);
     CUDA_SAFE_CALL(cudaMalloc((void**) &deviceFlux, mem_size));
     cudaMemset(deviceFlux, 0, mem_size);
     CUDA_SAFE_CALL(cudaMalloc((void**) &deviceVel, mem_size));
     cudaMemset(deviceVel, 0, mem_size);
-    */
 
     CUT_SAFE_CALL(cutStopTimer(timer_memory));
 
@@ -230,7 +227,6 @@ runTest(int argc, char** argv)
     CUT_SAFE_CALL(cutCreateTimer(&timer_compute));
     CUT_SAFE_CALL(cutStartTimer(timer_compute));
 
-
     d_dim_vector L;
     L.x = width;
     L.y = height;
@@ -239,16 +235,14 @@ runTest(int argc, char** argv)
 #endif
 
     // If this is the initial slice
-#ifndef LAST_SHOT_ONLY
     if (time==0.)
         ContinueWriteMatrix( data_fp, hostBetaP, time, width, breadth*height*NUM_COMP, if_quiet); 
-#endif
 
 #ifndef DEBUG_TIMESTEPS
     while(time < endTime) {
         double intermediateTime;
 #ifdef LOADING
-        timeInc = 0.5;
+        timeInc = TIME_STEP;//0.05/fabs(LOADING_RATE);
 #else
         if (time<=0.1) 
             timeInc = 0.01;
@@ -269,14 +263,8 @@ runTest(int argc, char** argv)
         }
         cudaThreadSynchronize();
         cudaMemcpy(hostBetaP, deviceBetaP, mem_size, cudaMemcpyDeviceToHost);
-#ifndef LAST_SHOT_ONLY
         ContinueWriteMatrix( data_fp, hostBetaP, time, width, breadth*height*NUM_COMP, if_quiet); 
-#endif
     }
-#ifdef LAST_SHOT_ONLY
-    ContinueWriteMatrix( data_fp, hostBetaP, time, width, breadth*height*NUM_COMP, if_quiet);
-#endif
-
 #else
 #ifndef SINGLE_STEP_DEBUG
     int count = 0;
@@ -339,9 +327,9 @@ runTest(int argc, char** argv)
     printf("  Copy result from device to host.\n");
 
     CUT_SAFE_CALL(cutStartTimer(timer_memory));
-    //cudaMemcpy(hostSigma, deviceSigma, mem_size, cudaMemcpyDeviceToHost);
-    //cudaMemcpy(hostFlux, deviceFlux, mem_size, cudaMemcpyDeviceToHost);
-    //cudaMemcpy(hostVel, deviceVel, mem_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(hostSigma, deviceSigma, mem_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(hostFlux, deviceFlux, mem_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(hostVel, deviceVel, mem_size, cudaMemcpyDeviceToHost);
     CUT_SAFE_CALL(cutStopTimer(timer_memory));
 
     // ================================================
@@ -378,9 +366,9 @@ runTest(int argc, char** argv)
     // ===================================================================
 
     CUDA_SAFE_CALL(cudaFree(deviceBetaP));
-    //CUDA_SAFE_CALL(cudaFree(deviceSigma));
-    //CUDA_SAFE_CALL(cudaFree(deviceFlux));
-    //CUDA_SAFE_CALL(cudaFree(deviceVel));
+    CUDA_SAFE_CALL(cudaFree(deviceSigma));
+    CUDA_SAFE_CALL(cudaFree(deviceFlux));
+    CUDA_SAFE_CALL(cudaFree(deviceVel));
 }
 
 
