@@ -42,45 +42,38 @@ def put_file(dir, file):
 def simulation(device, seed, header=None):
     prefix = method
     directory = prefix+str(len(gridShape))+"d"+str(N)
-    oldfile   = prefix+str(len(gridShape))+"d"+str(N)+"_s"+str(seed)+"_"+previous+".tgz"
-    filestub  = prefix+str(len(gridShape))+"d"+str(N)+"_s"+str(seed)+"_"+previous+postfix
-    currfile  = prefix+str(len(gridShape))+"d"+str(N)+"_s"+str(seed)+"_"+previous+postfix+".tgz"
+    unique    = directory+"_s"+str(seed)
+    oldstub   = unique+"_"+previous
+    oldfile   = unique+"_"+previous+".tgz"
+    currstub  = unique+"_"+previous+postfix
+    currfile  = unique+"_"+previous+postfix+".tgz"
 
     get_file(directory, currfile) 
     
     if os.path.isfile(os.path.join(directory, currfile)) == True:
         wrap.tar_extract(currfile, ".plas")
+        file_input = currstub+".plas"
     else:
-        get_file(directory, oldfile)
-
         if previous == "":
             state = FieldInitializer.GaussianRandomInitializer(gridShape, lengthscale,seed,vacancy=None)
         else:
+            get_file(directory, oldfile)
             tt,state = wrap.LoadTarState(oldfile)
-
-    defines += "#define FILE_OUTPUT \""+filename+"\" \n"
-
-    if lics <= 5:
-        file_input = filestub + ".ics" 
+        file_input = currstub + ".ics" 
         convertStateToCUDA(state, file_input)
-    else:
-        file_input = oldfile
-    
-    defines += "#define FILE_INPUT \""+file_input+"\" \n" 
-    defines += "#define TIME_FINAL "+str(time_end)+" \n"
-    defines += "#define TIME_STEP "+str(time_step)+" \n"
- 
-    headerreal = "generated.h" 
-    headerfile = filestub + ".h" 
 
-    for name in [headerreal, headerfile]:
-        makefile = open(name, "w")
-        makefile.write(defines)
-        makefile.close()
+    conf = {"blank": "nothing"}
+    wrap.conf_size(conf, N, dim)
+    wrap.conf_dynamics(conf, method)
+    wrap.conf_dynamic_nucleation(conf, postfix.contains("d"))
+    wrap.conf_files(conf, file_input, currstub+".plas")
+
+    wrap.conf_load(conf, load_direction, load_rate, load_start)
+    wrap.conf_times(conf, time_step, time_end)
     
-    exname = filestub + ".exe"
+    wrap.write_json_to_h(conf, currstub+".h")
+    exname = currstub + ".exe"
  
-    import os
     print os.system("make")
     print os.system("rm -r obj/")
     print os.system("mv ./build/release/plasticity "+exname)

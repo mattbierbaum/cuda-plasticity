@@ -69,11 +69,10 @@ def crepr_to_list(arr):
 #==========================================================
 # creates json configurations for simulations
 def conf_size(conf, N, dim):
-    conf = {"N": N}
+    conf.update({"N": N})
     conf.update({"CFLsafeFactor": 0.5})
     if dim == 3:
         conf.update({"DIMENSION3":""})
-    return conf
 
 def conf_load(conf, direction, rate, start=0.0):
     conf.update({"LOADING": ""})
@@ -100,6 +99,14 @@ def conf_dynamics(conf, dyn, **kwargs):
 def conf_dynamic_nucleation(conf, dn=True):
     if dn == True:
         conf.update({"DYNAMIC_NUCLEATION", ""})
+
+def conf_files(conf, infile, outfile):
+    conf.update({"FILE_INPUT": infile})
+    conf.update({"FILE_OUTPUT": outfile})
+
+def conf_times(conf, step, end):
+    conf.update({"TIME_STEP": step})
+    conf.update({"TIME_END": end})
 
 def conf_fromfile(filename):
     tar = tarfile.open(filename)
