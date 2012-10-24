@@ -4,9 +4,6 @@ import os, re
 
 #=====================================================
 # small helper functions
-def array_to_carray(arr):
-    return repr(arr).replace("array", "").replace("(","").replace(")","").replace("[","{").replace("]","}").replace("\n","").replace(" ","") 
-
 def get_extension(filename):
     return os.path.splitext(filename)[1]
 
@@ -18,10 +15,9 @@ def open_if_not(filename, mode):
 
 def write_json_to_h(dct, headername):
     dct = simplejson.loads(json)
-    
     headerfile = open_if_not(headername, "w")
     for key,val in dct.iteritems():
-        headerfile.write("#define "+key+" "+val)
+        headerfile.write("#define "+key+" "+list_to_crepr(val))
 
 def read_header(header):
     define_statement = re.compile("\#define\s([a-zA-Z0-9_\(\),]*)\s?(.*)$")
@@ -41,7 +37,7 @@ def read_header(header):
     return dct
 
 def read_json(jsonfile):
-    return simplejson.loads(open_if_not(jsonfile))
+    return simplejson.loads(crepr_to_list(open_if_not(jsonfile).read()))
 
 def js_N(dct):
     return int(dct["N"])
@@ -51,47 +47,69 @@ def js_dim(dct):
         return 3
     return 2
 
-def tar_getfile(tar, extension):
+def tar_getmem(tar, extension):
     if not isinstance(tar, tarfile.TarFile):
         tar = tarfile.open(tar)
     for mem in tar.getmembers():
         if mem.isfile() and get_extension(mem.name) == extension:
-            return tar.extractfile(mem)
+            return mem
 
+def tar_getfile(tar, extension):
+    return tar.extractfile(tar_getmem(tar,extension))
+
+def tar_extract(tar, extension):
+    return tar.extract(tar_getmem(extension))
+
+def list_to_crepr(arr):
+    return repr(arr).replace("[","{").replace("]","}")
+
+def crepr_to_list(arr):
+    return arr.replace("{","[").replace("}","]") 
 
 #==========================================================
 # creates json configurations for simulations
-class CUDAConfiguration(object):
-    def __init__(N, dim):
-        self.dct = {"N": N}
-        self.dct.update({"CFLsafeFactor": 0.5})
-        if dim == 3:
-            self.dct.update({"DIMENSION3":""})
+def conf_size(conf, N, dim):
+    conf = {"N": N}
+    conf.update({"CFLsafeFactor": 0.5})
+    if dim == 3:
+        conf.update({"DIMENSION3":""})
+    return conf
 
-    def load(direction, rate, start=0.0):
-        self.dct.update({"LOADING": ""})
-        self.dct.update({"LOAD_DEF": array_to_carray(direction)})
-        self.dct.update({"LOADING_RATE": rate})
-        self.dct.update({"LOAD_START": start})
+def conf_load(conf, direction, rate, start=0.0):
+    conf.update({"LOADING": ""})
+    conf.update({"LOAD_DEF": direction.tolist()})
+    conf.update({"LOADING_RATE": rate})
+    conf.update({"LOAD_START": start})
 
-    def dynamics(dyn):
-        if dyn == "gcd":
-            self.dct.update({"lambda": 0})
-        if dyn == "mdp":
-            self.dct.update({"lambda": 1})
-        if dyn == "lvp":
-            self.dct.update({"lambda": 0})
-            self.dct.update({"NEWGLIDEONLY", ""})
-       
-    def dynamic_nucleation(dn=True):
-        if dn == True:
-            self.dct.update({"DYNAMIC_NUCLEATION", ""})
+def conf_dynamics(conf, dyn, **kwargs):
+    if dyn == "gcd":
+        conf.update({"lambda": 0})
+    if dyn == "mdp":
+        conf.update({"lambda": 1})
+    if dyn == "lvp":
+        conf.update({"lambda": 0})
+        conf.update({"NEWGLIDEONLY", ""})
+   
+    #FIXME - both of these are incorrect
+    if dyn == "slip":
+        conf.update({"lambda": 0})
+        conf.update(kwargs)
+    if dyn == "vac":
+        conf.update({"VACANCIES": ""})
+    
+def conf_dynamic_nucleation(conf, dn=True):
+    if dn == True:
+        conf.update({"DYNAMIC_NUCLEATION", ""})
 
-
+def conf_fromfile(filename):
+    tar = tarfile.open(filename)
+    conf = read_json(tar_getfile(tar, ".json"))
+    tar.close()
+    return conf
 
 #===========================================================
 # these are the interesting functions
-def LoadState(file, time=None):
+def LoadTarState(file, time=None):
     filename, extenstion = os.path.splitext(file)
     tar = tarfile.open(file)
     dct = read_json(tar_getfile(tar, ".json"))
