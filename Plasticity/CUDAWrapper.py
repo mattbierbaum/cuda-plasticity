@@ -17,7 +17,7 @@ def open_if_not(filename, mode):
     else:
         return open(filename, mode)
 
-def write_json_to_h(dct, headername):
+def write_header(dct, headername):
     headerfile = open_if_not(headername, "w")
     for key,val in dct.iteritems():
         headerfile.write("#define "+key+" "+list_to_crepr(val)+"\n")
@@ -33,7 +33,7 @@ def read_header(header):
     for l in lines:
         try:
             var, val = define_statement.match(l.strip()).groups()   
-            dct[var] = val
+            dct[var] = crepr_to_list(val)
         except:
             print "Not a valid line: ", l.strip()
 
@@ -41,11 +41,11 @@ def read_header(header):
 
 def write_json(dct, filename):
     fi = open(filename, "w")
-    fi.write(crepr_to_list(simplejson.dumps(dct)))
+    fi.write(simplejson.dumps(dct))
     fi.close()
 
 def read_json(jsonfile):
-    return simplejson.loads(crepr_to_list(open_if_not(jsonfile, 'r').read()))
+    return simplejson.loads(open_if_not(jsonfile, 'r').read())
 
 def js_N(dct):
     return int(dct["N"])
@@ -139,7 +139,7 @@ def conf_files(conf, infile, outfile):
 
 def conf_times(conf, step, end):
     conf.update({"TIME_STEP": step})
-    conf.update({"TIME_END": end})
+    conf.update({"TIME_FINAL": end})
 
 def conf_fromfile(filename):
     tar = tarfile.open(filename)
@@ -170,9 +170,9 @@ def simulation(homedir, cudadir, dim, previous, postfix, method, device, seed, h
     directory = prefix+str(len(gridShape))+"d"+str(N)
     unique    = directory+"_s"+str(seed)
     oldstub   = unique+"_"+previous
-    oldfile   = unique+"_"+previous+".tgz"
+    oldfile   = unique+"_"+previous+".tar"
     currstub  = unique+"_"+previous+postfix
-    currfile  = unique+"_"+previous+postfix+".tgz"
+    currfile  = unique+"_"+previous+postfix+".tar"
 
     file_output= currstub+".plas"
     if os.path.isfile(currfile) == False:
@@ -201,18 +201,25 @@ def simulation(homedir, cudadir, dim, previous, postfix, method, device, seed, h
     headername = currstub+".h" 
     jsonname   = currstub+".json"
     write_json(conf, jsonname)
-    write_json_to_h(conf, headername)
+    write_header(conf, headername)
     exname = currstub + ".exe"
 
     here = os.getcwd()
     os.chdir(cudadir) 
-    os.system("make HEADER="+here+"/"+headername)
+    ret = os.system("make HEADER="+here+"/"+headername)
     os.system("rm -r obj/")
     os.system("mv ./build/release/plasticity "+here+"/"+exname)
     os.system("rm -r build/")
 
+    if ret != 0:
+        raise RuntimeError("Make failed!")
+
     os.chdir(here)
-    os.system("./"+exname+" --device="+str(device))
+    ret = os.system("./"+exname+" --device="+str(device))
+
+    if ret != 0:
+        raise RuntimeError("Executable did not finish")
+
     if not os.path.isdir(currstub):
         os.mkdir(currstub)
     if os.path.isfile(exname):
@@ -225,7 +232,7 @@ def simulation(homedir, cudadir, dim, previous, postfix, method, device, seed, h
         sh.move(file_input, currstub)
     if os.path.isfile(file_output):
         sh.move(file_output, currstub)
-    os.system("tar zcvf "+currfile+" "+currstub)
+    os.system("tar -cvf "+currfile+" "+currstub)
     os.system("rm -rf "+currstub)
     put_file(homedir, directory, currfile)  
 

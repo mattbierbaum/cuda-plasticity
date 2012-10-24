@@ -2,6 +2,7 @@
 #import SlipSystemBetaPState
 from Plasticity.PlasticityStates import RhoState
 from Plasticity.PlasticityStates import VacancyState
+from Plasticity.PlasticityStates import PlasticityState
 from Plasticity.Fields import Fields
 from scipy import fromfunction, sin, pi, outer, copy, fromfile, random, exp, sqrt
 from numpy import fft

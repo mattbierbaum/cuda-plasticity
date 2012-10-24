@@ -94,16 +94,16 @@ __device__ const int sigma_index[3][3] = {{0,1,2},{1,3,4},{2,4,5}};
 __global__ void
 symmetricRHS( data_type* u, data_type* sig, data_type* rhs, data_type* velocity, d_dim_vector L )
 {
-    volatile int bx = blockIdx.x;     
+/*    volatile int bx = blockIdx.x;     
 #ifdef DIMENSION3
     int bz = blockIdx.y/L.y;
     int by = blockIdx.y%L.y;
 #else
     int by = blockIdx.y;
 #endif
-    /* x coordinate is split into threads */
+    // x coordinate is split into threads 
     int tx = threadIdx.x;    
-    /* Indices of the array this thread will tackle */
+    // Indices of the array this thread will tackle 
     int i = threadIdx.y;
     int j = threadIdx.z;
     int idx = i*3+j;
@@ -112,7 +112,7 @@ symmetricRHS( data_type* u, data_type* sig, data_type* rhs, data_type* velocity,
     int in_idx = by*L.x + ix;
 #else
     int in_idx = (bz*L.y+by)*L.x+ix;
-#endif
+#endif*/
 }
 
 __global__ void
@@ -816,7 +816,7 @@ calculateKSigma( cdata_type* Ku, d_dim_vector L )
     data_type kz = 0.;
 #endif
     data_type kSqSq = kSq*kSq;
-    data_type k[3];
+    //data_type k[3];
 
 #ifdef PYTHON_COMPATIBILITY
     kSq += ME;
@@ -828,12 +828,12 @@ calculateKSigma( cdata_type* Ku, d_dim_vector L )
     volatile data_type k_i, k_j;
  
     if (ix < L.x) {
-        k[0] = kx;
-        k[1] = ky;
+        //k[0] = kx;
+        //k[1] = ky;
 #ifndef DIMENSION3
-        k[2] = 0;
+        //k[2] = 0;
 #else
-        k[2] = kz;
+        //k[2] = kz;
 #endif
         if (j==0)
             k_j = kx;
