@@ -1,10 +1,11 @@
 #!/usr/local/pub/enthought/bin/python
 # shape and size of sim.
-dct = {"cudadir": "/b/plasticity/cuda-plasticity/", \
-       "homedir": "/b/plasticity/", \
-       "dim":      3, \
-       "previous": "", \
-       "postfix":  "r", \
+dct = {"cudadir": "/b/plasticity/cuda-plasticity/", 
+       "homedir": "/b/plasticity/", 
+       "N":       128,
+       "dim":      3, 
+       "previous": "", 
+       "postfix":  "r", 
        "method":   "lvp"}
 
 from Plasticity import CUDAWrapper as wrap

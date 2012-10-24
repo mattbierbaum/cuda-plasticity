@@ -3,7 +3,6 @@ import tarfile
 import os, re
 import numpy
 from Plasticity.FieldInitializers import FieldInitializer
-from Plasticity.Constants import *
 import shutil as sh
 
 #=====================================================
@@ -150,20 +149,27 @@ def conf_fromfile(filename):
 #===========================================================
 # these are the interesting functions
 def LoadTarState(file, time=None):
-    filename, extenstion = os.path.splitext(file)
     tar = tarfile.open(file)
     dct = read_json(tar_getfile(tar, ".json"))
     t,s = FieldInitializer.LoadStateRaw(tar_getfile(tar, ".plas"), js_N(dct), js_dim(dct), time=time)
     tar.close()
     return t,s
 
+def LoadTarJSON(file):
+    tar = tarfile.open(file)
+    dct = read_json(tar_getfile(tar, ".json"))
+    tar.close()
+    return dct    
 
-def simulation(homedir, cudadir, dim, previous, postfix, method, device, seed, header=None):
+def LoadTarICS(file):
+    tar = tarfile.open(file)
+    dct = read_json(tar_getfile(tar, ".json"))
+    t,s = FieldInitializer.LoadStateRaw(tar_getfile(tar, ".ics"), js_N(dct), js_dim(dct), hastimes=False)
+    tar.close()
+    return t,s 
+
+def simulation(homedir, cudadir, N, dim, previous, postfix, method, device, seed, header=None):
     prefix = method
-    if dim == 2:
-        N = 1024
-    else:
-        N = 128
     gridShape = (N,)*dim
     lengthscale = 0.2
 
