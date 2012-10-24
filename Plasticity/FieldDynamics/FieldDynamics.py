@@ -1,7 +1,7 @@
-import NumericalMethods
-import Fields
+from Plasticity import NumericalMethods
+from Plasticity.Fields import Fields
 
-from Constants import *
+from Plasticity.Constants import *
 
 class FieldDynamics:
     """

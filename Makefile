@@ -52,7 +52,7 @@ EXECUTABLE	:= plasticity
 # Cuda source files (compiled with cudacc)
 CUFILES_sm_13		:= plasticity.cu
 # C/C++ source files (compiled with gcc / c++)
-CCFILES		:= 
+CCFILES                :=
 
 ################################################################################
 # Rules and targets
@@ -61,6 +61,7 @@ CCFILES		:=
 #include ../CUDA_WORKSHOP_UIUC/common/common.mk
 ROOTDIR := /a/CUDA_SDK_31/C/common
 BINDIR := ./build
+export $(HEADER)
 include common.mk
 
 LIB += -lfftw3

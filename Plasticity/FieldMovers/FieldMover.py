@@ -1,8 +1,8 @@
 import sys
 
-import NumericalMethods
-from Constants import *
-import GridArray
+import Plasticity.NumericalMethods as NumericalMethods
+from Plasticity.Constants import *
+from Plasticity.GridArray import GridArray
 import numpy
 
 class FieldMover:

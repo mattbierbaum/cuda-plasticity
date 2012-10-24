@@ -1,6 +1,6 @@
-import FieldDynamics
+from Plasticity.FieldDynamics import FieldDynamics
 
-from NumericalMethods import *
+from Plasticity.NumericalMethods import *
 
 """
 This controls the theta parameter for MinMod limiters.

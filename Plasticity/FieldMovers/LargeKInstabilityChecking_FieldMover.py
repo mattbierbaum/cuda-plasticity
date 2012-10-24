@@ -1,6 +1,6 @@
-import FieldMover
-import NumericalMethods
-import FieldInitializer
+from Plasticity.FieldMovers import FieldMover
+from Plasticity import NumericalMethods
+from Plasticity.FieldInitializers import FieldInitializer
 
 import sys
 

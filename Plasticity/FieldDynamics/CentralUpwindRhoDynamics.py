@@ -1,9 +1,9 @@
-from CentralUpwind import *
-from NumericalMethods import *
-from Constants import *
+from Plasticity.FieldDynamics.CentralUpwind import *
+from Plasticity.NumericalMethods import *
+from Plasticity.Constants import *
 
-import Fields
-import FieldDynamics
+from Plasticity.Fields import Fields
+from Plasticity.FieldDynamics import FieldDynamics
 
 class RhoDynamics(CentralUpwindDynamics):
     def __init__(self, Dx=None, Lambda=0, coreEnergy=0, coreEnergyLog=0):

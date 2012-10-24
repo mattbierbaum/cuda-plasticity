@@ -1,5 +1,5 @@
-from CUDAGridArray import GridArray
-import FourierSpaceTools
+from Plasticity.GridArray.CUDAGridArray import GridArray
+from Plasticity.GridArray import FourierSpaceTools
 from numpy import *
 
 def identity(a):

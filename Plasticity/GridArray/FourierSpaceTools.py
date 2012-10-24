@@ -1,6 +1,6 @@
-import GridArray
+from Plasticity.GridArray import GridArray
 from numpy import *
-from Constants import *
+from Plasticity.Constants import *
 
 def identity(a):
     greater = (a>pi).astype(float)

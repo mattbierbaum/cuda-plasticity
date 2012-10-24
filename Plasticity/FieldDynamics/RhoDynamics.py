@@ -1,8 +1,8 @@
-import NumericalMethods
-import Fields
-import FieldDynamics
+from Plasticity import NumericalMethods
+from Plasticity.Fields import Fields
+from Plasticity.FieldDynamics import FieldDynamics
 
-from Constants import *
+from Plasticity.Constants import *
 
 
 class SymmetricDerivativeDynamics(FieldDynamics.FieldDynamics):

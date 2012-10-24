@@ -1,17 +1,16 @@
-import PlasticityState
 #import SlipSystemState
 #import SlipSystemBetaPState
-import RhoState
-import VacancyState
-import Fields
+from Plasticity.PlasticityStates import RhoState
+from Plasticity.PlasticityStates import VacancyState
+from Plasticity.Fields import Fields
 from scipy import fromfunction, sin, pi, outer, copy, fromfile, random, exp, sqrt
 from numpy import fft
 import numpy
 
 from Constants import *
 
-import GridArray
-import FourierSpaceTools
+from Plasticity.GridArray import GridArray
+from Plasticity.GridArray import FourierSpaceTools
 import copy
 
 def ReformatState(state):

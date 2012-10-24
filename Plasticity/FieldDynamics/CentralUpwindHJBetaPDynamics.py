@@ -1,8 +1,8 @@
-from CentralUpwindHJ import *
-from Constants import *
+from Plasticity.FieldDynamics.CentralUpwindHJ import *
+from Plasticity.Constants import *
 
-import NumericalMethods
-import Fields
+from Plasticity import NumericalMethods
+from Plasticity.Fields import Fields
 
 """
 Define BetaP H-J type dynamics

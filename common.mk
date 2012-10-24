@@ -92,6 +92,12 @@ CXX_ARCH_FLAGS  :=
 NVCCFLAGS       :=
 LIB_ARCH        := $(OSARCH)
 
+ifndef HEADER
+    $(warning EXTENDED_HEADER not defined, compile will fail)
+else    
+    NVCCFLAGS += -DEXTENDED_HEADER=\"$(HEADER)\"
+endif
+
 # Determining the necessary Cross-Compilation Flags
 # 32-bit OS, but we target 64-bit cross compilation
 ifeq ($(x86_64),1) 

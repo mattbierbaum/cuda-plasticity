@@ -1,7 +1,4 @@
 import sys
-# This line adds the subdirectories so that files in sub directories could be imported.
-# It may not be the most elegant way of handling this kind of situation, but it was the simplest we could find.
-sys.path += ["GridArray", "Fields", "FieldMovers", "FieldDynamics", "Observers", "FieldInitializers", "PlasticityStates"]
 
 class PlasticitySystem:
     """

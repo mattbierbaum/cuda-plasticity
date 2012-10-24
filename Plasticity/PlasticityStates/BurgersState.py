@@ -1,7 +1,7 @@
-import PlasticityState
-import Fields
-import GridArray
-import FourierSpaceTools
+from Plasticity.PlasticityStates import PlasticityState
+from Plasticity.Fields import Fields
+from Plasticity.GridArray import GridArray
+from Plasticity.GridArray import FourierSpaceTools
 
 class BurgersState(PlasticityState.PlasticityState):
     def __init__(self, gridShape, field=None, nu=0.3, mu=0.5, inherit=None):

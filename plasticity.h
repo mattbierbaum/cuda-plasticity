@@ -18,7 +18,7 @@
 #define DOUBLE
 #define LLF
 
-#include "EXTENDED_HEADER"
+#include EXTENDED_HEADER
 
 // From here on defines data type related definitions
 #ifndef DOUBLE

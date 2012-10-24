@@ -1,15 +1,15 @@
-import Fields
-import NumericalMethods
+from Plasticity.Fields import Fields
+from Plasticity import NumericalMethods
 
 from scipy import fromfunction, sin, pi
 
-import GridArray
-import FourierSpaceTools
+from Plasticity.GridArray import GridArray
+from Plasticity.GridArray import FourierSpaceTools
 
 #from CUDAGridArray import GridArray
 #from CUDAFourierSpaceTools import FourierSpaceTools
 
-from Constants import *
+from Plasticity.Constants import *
 
 ME = NumericalMethods.ME
 fourierTools = {}

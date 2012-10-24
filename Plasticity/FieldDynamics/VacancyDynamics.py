@@ -1,12 +1,12 @@
-from CentralUpwindHJ import *
-from Constants import *
-from CentralUpwindHJBetaPDynamics3D import *
+from Plasticity.FieldDynamics.CentralUpwindHJ import *
+from Plasticity.Constants import *
+from Plasticity.FieldDynamics.CentralUpwindHJBetaPDynamics3D import *
 
-import PlasticityState
-import GridArray
+from Plasticity.PlasticityState import PlasticityState
+from Plasticity.GridArray import GridArray
 
-import NumericalMethods
-import Fields
+from Plasticity import NumericalMethods
+from Plasticity.Fields import Fields
 
 import numpy
 

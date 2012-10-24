@@ -1,5 +1,5 @@
-import PlasticitySystem, FieldInitializer
-from Constants import *
+from Plasticity.FieldInitializers import FieldInitializer
+from Plasticity.Constants import *
 import numpy
 import pylab
 import pickle

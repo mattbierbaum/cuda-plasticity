@@ -2,7 +2,7 @@ import numpy
 from numpy import fromfunction, pi
 import numpy.fft as fft
 
-import GridArray
+from Plasticity.GridArray import GridArray
 
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda

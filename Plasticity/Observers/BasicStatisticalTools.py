@@ -1,9 +1,4 @@
 import numpy
-import PlasticitySystem
-import sys
-sys.path += [".."]
-
-import FieldInitializer
 
 import os
 
@@ -11,7 +6,8 @@ from scipy.cluster import vq
 from scipy.optimize import leastsq
 from numpy import fft
 
-from Constants import *
+from Plasticity.Constants import *
+from Plasticity.FieldInitializers import FieldInitializer
 
 
 def PowerlawFittingFromPoints(data,p0):

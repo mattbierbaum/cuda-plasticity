@@ -1,5 +1,5 @@
-import GridArray
-import FourierSpaceTools
+from Plasticity.GridArray import GridArray
+from Plasticity.GridArray import FourierSpaceTools
 
 def NoneAllocator(*args, **kwargs):
     return None

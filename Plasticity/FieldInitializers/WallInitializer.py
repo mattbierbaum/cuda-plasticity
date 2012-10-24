@@ -1,12 +1,12 @@
-import RhoState
-import Fields
+from Plasticity.PlasticityStates import RhoState
+from Plasticity.Fields import Fields
 
 from numpy import fft,pi
 import numpy
 import scipy.weave as W
 
-from Constants import *
-import NumericalMethods
+from Plasticity.Constants import *
+from Plasticity import NumericalMethods
 
 def RandomRodriguesVectorFieldGenerator(gridShape, numberOfCells, inplane=True, seed=0):
     """

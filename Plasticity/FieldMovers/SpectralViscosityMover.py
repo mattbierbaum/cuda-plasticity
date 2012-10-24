@@ -1,7 +1,7 @@
 from numpy import  fromfunction, power, array
 
-import FieldMover
-import NumericalMethods
+from Plasticity.FieldMovers import FieldMover
+from Plasticity import NumericalMethods
 
 ME = NumericalMethods.ME
 
