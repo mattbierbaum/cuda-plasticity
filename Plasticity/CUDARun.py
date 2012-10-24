@@ -1,20 +1,13 @@
 #!/usr/local/pub/enthought/bin/python
 # shape and size of sim.
-cudadir  = "/b/plasticity/cuda-plasticity/"
-homedir  = "/b/plasticity/"
-dim      = 3
-previous = ""
-postfix  = "r"
-method   = "lvp"
+dct = {"cudadir": "/b/plasticity/cuda-plasticity/", \
+       "homedir": "/b/plasticity/", \
+       "dim":      3, \
+       "previous": "", \
+       "postfix":  "r", \
+       "method":   "lvp"}
 
-import sys
-sys.path.append(cudadir)
-sys.path.append(cudadir+"Plasticity")
-sys.path.append(cudadir+"Plasticity/Fields")
-sys.path.append(cudadir+"Plasticity/GridArray")
-sys.path.append(cudadir+"Plasticity/PlasticityStates")
-sys.path.append(cudadir+"Plasticity/FieldInitializers")
-import CUDAWrapper as wrap
+from Plasticity import CUDAWrapper as wrap
 from optparse import OptionParser
 
 def main():
@@ -28,7 +21,9 @@ def main():
     seed   = options.seed
     device = options.device
 
-    wrap.simulation(homedir, cudadir, dim, previous, postfix, method, device=device, seed=seed)
+    dct.update({"device": options.device})
+    dct.update({"seed":   options.seed})
+    wrap.simulation(**dct)
 
 if __name__ == "__main__":
     main()
