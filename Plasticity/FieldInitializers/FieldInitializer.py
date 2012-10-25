@@ -8,7 +8,7 @@ from scipy import fromfunction, sin, pi, outer, copy, fromfile, random, exp, sqr
 from numpy import fft
 import numpy
 
-from Constants import *
+from Plasticity.Constants import *
 
 from Plasticity.GridArray import GridArray
 from Plasticity.GridArray import FourierSpaceTools

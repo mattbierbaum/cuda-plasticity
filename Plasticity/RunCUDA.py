@@ -1,20 +1,10 @@
 #!/usr/local/pub/enthought/bin/python
 # shape and size of sim.
-import simplejson 
 import os, re
 import numpy
 from Plasticity.FieldInitializers import FieldInitializer
 from Plasticity.TarFile import * 
 import shutil as sh
-
-dct = {"cudadir": "/b/plasticity/cuda-plasticity/", 
-       "homedir": "/b/plasticity/", 
-       "N":       128,
-       "dim":      3, 
-       "previous": "", 
-       "postfix":  "r", 
-       "method":   "lvp"}
-
 
 def convertStateToCUDA(state, filename):
     arr = []
@@ -30,12 +20,6 @@ def convertStateToCUDA(state, filename):
 
     arr = numpy.array(arr)
     arr.tofile(filename)
-
-def get_file(store, dir, file):
-    return os.system("cp "+store+"/"+dir+"/"+file+" . ")
-
-def put_file(store, dir, file):
-    return os.system("cp "+file+" "+store+"/"+dir)
 
 #==========================================================
 # creates json headerigurations for simulations
@@ -85,11 +69,27 @@ def header_fromfile(filename):
     tar.close()
     return header
 
+def local_get(store, dir, file):
+    return os.system("cp "+store+"/"+dir+"/"+file+" . ")
+
+def local_put(store, dir, file):
+    return os.system("cp "+file+" "+store+"/"+dir)
+
+from Plasticity.Configure import *
 #===============================================================
 # actual simulation function
-def simulation(dct):
-    #homedir, cudadir, N, dim, previous, postfix, method, device, seed, header=None):
-    
+def simulation(dct, get_file=local_get, put_file=local_put):
+    conf = Configuration(dct)
+    homedir = conf.homedir
+    cudadir = conf.cudadir
+    N       = conf.N
+    dim     = conf.dim
+    previous= conf.previous
+    postfix = conf.postfix
+    method  = conf.method
+    device  = conf.device
+    seed    = conf.seed
+
     prefix = method
     gridShape = (N,)*dim
     lengthscale = 0.2
@@ -115,7 +115,12 @@ def simulation(dct):
             tt,state = LoadTarState(oldfile)
         file_input = currstub + ".ics" 
         convertStateToCUDA(state, file_input)
+    
+    confname = currstub+".conf"
+    write_json(dct, currstub+".conf")
 
+    # ====================================================
+    # begin non-standard things now
     header = {"blank": "nothing"}
     header_size(header, N, dim)
     header_dynamics(header, method)
@@ -155,6 +160,11 @@ def simulation(dct):
         sh.move(jsonname, currstub)
     if os.path.isfile(headername):
         sh.move(headername, currstub)
+
+    # =======================================================
+    # begin standard things again
+    if os.path.isfile(confname):
+        sh.move(confname, currstub)
     if os.path.isfile(file_input):
         sh.move(file_input, currstub)
     if os.path.isfile(file_output):
@@ -163,25 +173,5 @@ def simulation(dct):
     os.system("rm -rf "+currstub)
     put_file(homedir, directory, currfile)  
 
-
-from optparse import OptionParser
-
-def main():
-    parser = OptionParser()
-    parser.add_option("-s", "--seed", dest="seed", action="store", type="int",
-                      help="seed to use if generated RIC", default=0)
-    parser.add_option("-d", "--device", dest="device", action="store", type="int",
-                      help="the card to run on", default=0) 
-
-    (options, args) = parser.parse_args()
-    seed   = options.seed
-    device = options.device
-
-    dct.update({"device": options.device})
-    dct.update({"seed":   options.seed})
-    simulation(dct)
-
-if __name__ == "__main__":
-    main()
 
 

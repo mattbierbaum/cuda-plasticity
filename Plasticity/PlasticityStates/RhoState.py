@@ -2,7 +2,7 @@ from Plasticity.Fields import Fields
 from Plasticity import NumericalMethods
 from Plasticity.PlasticityStates import PlasticityState
 
-from Constants import *
+from Plasticity.Constants import *
 
 ME = NumericalMethods.ME
 

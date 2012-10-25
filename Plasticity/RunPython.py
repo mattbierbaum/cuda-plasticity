@@ -83,13 +83,45 @@ class VacancyDynamicsExternalLoad(VacancyDynamics.BetaP_VacancyDynamics):
         else:
             return ExternalStress(sigma,self.initial+self.rate*(time-self.initT)) 
 
+def local_get(store, dir, file):
+    return os.system("cp "+store+"/"+dir+"/"+file+" . ")
 
-class Struct:
-    def __init__(self, **entries): 
-        self.__dict__.update(entries)
+def local_put(store, dir, file):
+    return os.system("cp "+file+" "+store+"/"+dir)
+
+def convertStateToCUDA(state, filename):
+    arr = []
+    order = [('x', 'x'), ('x', 'y'), ('x', 'z'),
+             ('y', 'x'), ('y', 'y'), ('y', 'z'),
+             ('z', 'x'), ('z', 'y'), ('z', 'z'), ('s', 's')] 
+    try:  
+        for c in order:
+            arr.append( state.betaP_V[c].transpose().copy() )
+    except:
+        for c in state.betaP.components:
+            arr.append( state.betaP[c].transpose().copy() )
+
+    arr = numpy.array(arr)
+    arr.tofile(filename)
+
+#===========================================================
+# start of the simulation function
+from Plasticity.Configure import *
+from Plasticity.TarFile import * 
+import shutil as sh
+import os
 
 def simulation(config):
-    c = Struct(config)
+    conf = Configuration(dct)
+    homedir = conf.homedir
+    cudadir = conf.cudadir
+    N       = conf.N
+    dim     = conf.dim
+    previous= conf.previous
+    postfix = conf.postfix
+    method  = conf.method
+    device  = conf.device
+    seed    = conf.seed
 
     prefix = method
     gridShape = (N,)*dim
@@ -101,7 +133,28 @@ def simulation(config):
     oldfile   = unique+"_"+previous+".tar"
     currstub  = unique+"_"+previous+postfix
     currfile  = unique+"_"+previous+postfix+".tar"
+   
+    file_output= currstub+".plas"
+    if os.path.isfile(currfile) == False:
+        get_file(homedir, directory, currfile) 
+    if os.path.isfile(currfile) == True:
+        tar_extract(tar_open(currfile), ".plas")
+        file_input = currstub+".plas"
+    else:
+        if previous == "":
+            state = FieldInitializer.GaussianRandomInitializer(gridShape, lengthscale,seed,vacancy=None)
+        else:
+            get_file(homedir, directory, oldfile)
+            tt,state = LoadTarState(oldfile)
+        file_input = currstub + ".ics" 
+        convertStateToCUDA(state, file_input)
 
+    confname = currstub+".conf"
+    write_json(dct, confname) 
+
+
+    # ====================================================
+    # begin non-standard things now
     if method == "mdp":
         if "load" in kwargs:
             dynamics = UpwindLoadingBetaPDynamics(Lambda=1,rate=kwargs["load_dir"],\
@@ -126,9 +179,6 @@ def simulation(config):
             dynamics = CentralUpwindHJBetaPGlideOnlyDynamics.BetaPDynamics()
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
-
-    filename = dir+info+dlabel+"_L"+str(Lambda)+"_S"+str(seed)+"_"+str(len(gridShape))+"D"+str(N)+".save"
-   
     obsState = Observer.RecallStateObserver()
     energychecking = TotalFreeEnergyDownhillObserver()
 
@@ -138,11 +188,11 @@ def simulation(config):
 
     t = startTime 
     if startTime == 0. :
-        recordState = Observer.RecordStateObserver(filename=filename)
+        recordState = Observer.RecordStateObserverRaw(filename=filename)
         recordState.Update(t, state)
     else:
-        T,state = FieldInitializer.LoadState(filename)
-        recordState = Observer.RecordStateObserver(filename=filename,mode='a')
+        T,state = FieldInitializer.LoadStateRaw(filename)
+        recordState = Observer.RecordStateObserverRaw(filename=filename,mode='a')
 
     system= PlasticitySystem.PlasticitySystem(gridShape, state, mover, dynamics, [obsState,Observer.VerboseTimestepObserver()])
 
@@ -164,6 +214,19 @@ def simulation(config):
         system.Run(startTime=preT, endTime = t)
         system.state = obsState.state
         recordState.Update(t, system.state)
+
+    #=======================================================
+    # begin standard things again
+    if os.path.isfile(confname):
+        sh.move(confname, currstub)
+    if os.path.isfile(file_input):
+        sh.move(file_input, currstub)
+    if os.path.isfile(file_output):
+        sh.move(file_output, currstub)
+    os.system("tar -cvf "+currfile+" "+currstub)
+    os.system("rm -rf "+currstub)
+    put_file(homedir, directory, currfile)  
+ 
 
 def main():
     Relaxation_BetaPV()
