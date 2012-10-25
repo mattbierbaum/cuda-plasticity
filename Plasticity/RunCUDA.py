@@ -23,6 +23,34 @@ def convertStateToCUDA(state, filename):
 
 #==========================================================
 # creates json headerigurations for simulations
+def write_header(dct, headername):
+    headerfile = open_if_not(headername, "w")
+    for key,val in dct.iteritems():
+        headerfile.write("#define "+key+" "+list_to_crepr(val)+"\n")
+
+def read_header(header):
+    define_statement = re.compile("\#define\s([a-zA-Z0-9_\(\),]*)\s?(.*)$")
+
+    dct = {}
+    headerfile = open_if_not(header, "r")
+    lines = headerfile.readlines()
+    headerfile.close()
+
+    for l in lines:
+        try:
+            var, val = define_statement.match(l.strip()).groups()   
+            dct[var] = crepr_to_list(val)
+        except:
+            print "Not a valid line: ", l.strip()
+
+    return dct
+
+def list_to_crepr(arr):
+    return repr(arr).replace("[","{").replace("]","}").replace("\'", "\"")
+
+def crepr_to_list(arr):
+    return arr.replace("{","[").replace("}","]").replace("\"","\'") 
+
 def header_size(header, N, dim):
     header.update({"N": N})
     header.update({"CFLsafeFactor": 0.5})
@@ -89,6 +117,7 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     method  = conf.method
     device  = conf.device
     seed    = conf.seed
+    hash    = conf.hash
 
     prefix = method
     gridShape = (N,)*dim
@@ -117,7 +146,7 @@ def simulation(dct, get_file=local_get, put_file=local_put):
         convertStateToCUDA(state, file_input)
     
     confname = currstub+".conf"
-    write_json(dct, currstub+".conf")
+    write_json(conf, currstub+".conf")
 
     # ====================================================
     # begin non-standard things now

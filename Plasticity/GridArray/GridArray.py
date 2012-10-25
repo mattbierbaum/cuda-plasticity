@@ -96,14 +96,14 @@ class NumpyArray(numpy.ndarray):
         sum = self.sum()
         return sum/self.size
 
-    def sum(self):
-        return numpy.ndarray.sum(self)
+    def sum(self, *args, **kwargs):
+        return numpy.ndarray.sum(self, *args, **kwargs)
 
-    def max(self):
-        return numpy.ndarray.max(self)
+    def max(self, *args, **kwargs):
+        return numpy.ndarray.max(self, *args, **kwargs)
 
-    def min(self):
-        return numpy.ndarray.min(self)
+    def min(self, *args, **kwargs):
+        return numpy.ndarray.min(self, *args, **kwargs)
 
     """
     static methods

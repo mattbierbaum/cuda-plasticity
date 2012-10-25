@@ -2,7 +2,7 @@ from Plasticity.FieldDynamics.CentralUpwindHJ import *
 from Plasticity.Constants import *
 from Plasticity.FieldDynamics.CentralUpwindHJBetaPDynamics3D import *
 
-from Plasticity.PlasticityState import PlasticityState
+from Plasticity.PlasticityStates import PlasticityState
 from Plasticity.GridArray import GridArray
 
 from Plasticity import NumericalMethods

@@ -4,7 +4,7 @@ from Plasticity.GridArray import FourierSpaceTools
 def NoneAllocator(*args, **kwargs):
     return None
 
-class Field:
+class Field(object):
     """
     Implementation of multiplying rhoTilde by k^4:
       for elem in sigmaTilde.components:
@@ -247,7 +247,8 @@ class TensorField (Field):
                 components = [('x','x'), ('x','y'), ('x','z'), \
                               ('y','x'), ('y','y'), ('y','z'), \
                               ('z','x'), ('z','y'), ('z','z')]
-        Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
+        super(TensorField, self).__init__(gridShape, components, kspace=kspace, allocator=allocator)
+        #Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
 
     def GenerateComponents(self, rank=2, directions=['x','y','z']):
         """

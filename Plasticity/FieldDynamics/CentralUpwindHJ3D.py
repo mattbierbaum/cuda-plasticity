@@ -274,7 +274,7 @@ class CentralUpwindHJDynamics(FieldDynamics.FieldDynamics):
 """
 From here on we have specific parts for Burger's equation
 """
-import BurgersState
+from Plasticity.PlasticityStates import BurgersState
 
 def Burgers1D_H(u,ux):
     #return u*ux

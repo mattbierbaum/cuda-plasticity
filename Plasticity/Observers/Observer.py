@@ -2,7 +2,7 @@ import pickle
 import numpy
 import sys
 
-import NumericalMethods
+from Plasticity import NumericalMethods
 
 class Observer:
     """Base class for Observers"""
@@ -62,8 +62,10 @@ class RecordStateObserverRaw(Observer):
         """
         flush so that you can see the states updated immediately
         """
-        self.file.write(time)
-        self.file.write(state.GetOrderParameterFile().numpy_array().tostring())
+        self.file.write(numpy.array([time]).tostring())
+        field = state.GetOrderParameterField()
+        for c in field.components:
+            self.file.write(field.data[c].tostring())
         self.file.flush()
 
 class VerboseTimestepObserver(Observer):

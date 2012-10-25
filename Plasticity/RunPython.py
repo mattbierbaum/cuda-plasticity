@@ -1,4 +1,5 @@
 #!/usr/bin/python2.4 
+from Plasticity import PlasticitySystem
 from Plasticity.FieldInitializers import FieldInitializer, WallInitializer
 from Plasticity.FieldDynamics import FieldDynamics
 from Plasticity.FieldMovers import FieldMover
@@ -111,7 +112,7 @@ from Plasticity.TarFile import *
 import shutil as sh
 import os
 
-def simulation(config):
+def simulation(dct, get_file=local_get, put_file=local_put):
     conf = Configuration(dct)
     homedir = conf.homedir
     cudadir = conf.cudadir
@@ -122,6 +123,7 @@ def simulation(config):
     method  = conf.method
     device  = conf.device
     seed    = conf.seed
+    hash    = conf.hash
 
     prefix = method
     gridShape = (N,)*dim
@@ -150,37 +152,35 @@ def simulation(config):
         convertStateToCUDA(state, file_input)
 
     confname = currstub+".conf"
-    write_json(dct, confname) 
-
+    write_json(conf, confname) 
 
     # ====================================================
     # begin non-standard things now
     if method == "mdp":
-        if "load" in kwargs:
-            dynamics = UpwindLoadingBetaPDynamics(Lambda=1,rate=kwargs["load_dir"],\
-                        initial=kwargs["load_start"],type=kwargs["load_tye"]))
+        if "load" in conf:
+            dynamics = UpwindLoadingBetaPDynamics(Lambda=1,rate=conf["load_dir"],\
+                        initial=conf["load_start"],type=conf["load_tye"])
         else:
             dynamics = CentralUpwindHJBetaPDynamics.BetaPDynamics(Lambda=1)
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
     if method == "gcd":
-        if "load" in kwargs:
-            dynamics = UpwindLoadingBetaPDynamics(Lambda=0,rate=kwargs["load_dir"],\
-                        initial=kwargs["load_start"],type=kwargs["load_type"])
+        if "load" in conf:
+            dynamics = UpwindLoadingBetaPDynamics(Lambda=0,rate=conf["load_dir"],\
+                        initial=conf["load_start"],type=conf["load_type"])
         else: 
             dynamics = CentralUpwindHJBetaPDynamics.BetaPDynamics(Lambda=0)
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
     if method == "lvp":
-        if "load" in kwargs:
-            dynamics = NewGlideOnlyLoadDynamics(rate=kwargs["load_rate"],\
-                        initial=kwargs["load_start"],type=kwargs["load_type"])
+        if "load" in conf:
+            dynamics = NewGlideOnlyLoadDynamics(rate=conf["load_rate"],\
+                        initial=conf["load_start"],type=conf["load_type"])
         else:
             dynamics = CentralUpwindHJBetaPGlideOnlyDynamics.BetaPDynamics()
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
     obsState = Observer.RecallStateObserver()
-    energychecking = TotalFreeEnergyDownhillObserver()
 
     startTime = 0. 
     endTime   = 30.
@@ -188,13 +188,13 @@ def simulation(config):
 
     t = startTime 
     if startTime == 0. :
-        recordState = Observer.RecordStateObserverRaw(filename=filename)
+        recordState = Observer.RecordStateObserverRaw(filename=file_output)
         recordState.Update(t, state)
     else:
-        T,state = FieldInitializer.LoadStateRaw(filename)
-        recordState = Observer.RecordStateObserverRaw(filename=filename,mode='a')
+        T,state = FieldInitializer.LoadStateRaw(file_input, N, dim, hastimes=False)
+        recordState = Observer.RecordStateObserverRaw(filename=file_output,mode='a')
 
-    system= PlasticitySystem.PlasticitySystem(gridShape, state, mover, dynamics, [obsState,Observer.VerboseTimestepObserver()])
+    system=PlasticitySystem.PlasticitySystem(gridShape, state, mover, dynamics, [obsState,Observer.VerboseTimestepObserver()])
 
     while t<=(endTime):
         preT = t

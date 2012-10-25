@@ -94,6 +94,9 @@ class TVDRungeKutta_FieldMover(FieldMover):
         sum = max(state.gridShape)*velocity.max()
 
         dt = self.CFLsafeFactor / sum
+
+        # FIXME FIXME FIXME whattt?!?!?
+        dt = dt.tolist()
         """
         set up maximum bound for time step.
         Otherwise, energy may go uphill sometime.
