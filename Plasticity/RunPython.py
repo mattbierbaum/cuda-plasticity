@@ -1,75 +1,18 @@
 #!/usr/bin/python2.4 
-import PlasticitySystem
-import FieldInitializer
-import FieldDynamics
-import FieldMover
-import VacancyDynamics
-import Observer
+from Plasticity.FieldInitializers import FieldInitializer, WallInitializer
+from Plasticity.FieldDynamics import FieldDynamics
+from Plasticity.FieldMovers import FieldMover
+from Plasticity.FieldDynamics import VacancyDynamics
+from Plasticity.Observers import Observer
+from Plasticity.PlasticityStates import VacancyState, PlasticityState
+from Plasticity.Constants import *
+from Plasticity.GridArray import GridArray
+from Plasticity.FieldDynamics import CentralUpwindHJBetaPDynamics, CentralUpwindHJBetaPGlideOnlyDynamics
+from Plasticity import NumericalMethods
+from Plasticity.Fields import Fields
 import pylab
-import VacancyState, PlasticityState
 import numpy
 import scipy.weave as weave
-from Constants import *
-import GridArray
-import CentralUpwindHJBetaPDynamics
-import NumericalMethods
-import CentralUpwindHJBetaPGlideOnlyDynamics
-import WallInitializer
-import Fields
-
-# shape and size of sim.
-N = 128 
-gridShape = (N,N)
- 
-dir = "./"
-lengthscale = 0.2
-
-# load parameters
-loadrate = 0.01
-loadconst= 0.0
-loaddir  = numpy.array([-0.5,-0.5,1.0]) 
-loadtype = 'strain'
-
-# vacancy parameters
-gamma  = 1e-2
-alpha  = 1e0
-beta   = 1
-c0     = 0
-
-# upwind glide only parameter
-Lambda = 0
-
-# old file to use for ics=7
-oldfile = "RND_Upwind_L0_S0_2D128.save"
-
-
-method = 5
-"""
-0 : Vacancies 
-1 : NewGlideOnly
-2 : Upwind
-3 : Vacancies w/ load 
-4 : NewGlideOnly w/ load
-5 : Upwind w/ load
-"""
-
-ics = 7
-"""
-0 : random gaussian with lengthscale
-1 : 4 point sources
-2 : 2 tilt walls - perpendicular point
-3 : 2 tilt walls - parallel point
-4 : 2 offset parallel point dislocation
-5 : Nabarro-Herring hexagons
-6 : add walls to a relaxed state
-7 : load old file
-"""
-
-LoadRate = loadrate*loaddir 
-LoadInit = loadconst*loaddir
-LoadType = loadtype
-loaddstr = '['+str(loaddir[0])+','+str(loaddir[1])+','+str(loaddir[2])+']'
-
 
 mu,nu = 0.5,0.3 
 lamb = 2.*mu*nu/(1.-2.*nu)
@@ -141,7 +84,13 @@ class VacancyDynamicsExternalLoad(VacancyDynamics.BetaP_VacancyDynamics):
             return ExternalStress(sigma,self.initial+self.rate*(time-self.initT)) 
 
 
-def simulation(homedir, cudadir, N, dim, previous, postfix, method, device, seed, header=None, **kwargs):
+class Struct:
+    def __init__(self, **entries): 
+        self.__dict__.update(entries)
+
+def simulation(config):
+    c = Struct(config)
+
     prefix = method
     gridShape = (N,)*dim
     lengthscale = 0.2

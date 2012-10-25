@@ -38,13 +38,6 @@ def read_header(header):
 
     return dct
 
-def write_json(dct, filename):
-    fi = open(filename, "w")
-    fi.write(simplejson.dumps(dct))
-    fi.close()
-
-def read_json(jsonfile):
-    return simplejson.loads(open_if_not(jsonfile, 'r').read())
 
 def js_N(dct):
     return int(dct["N"])
