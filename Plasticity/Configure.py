@@ -1,6 +1,4 @@
-# FIXME - add all of conf_* to Configuration
-# FIXME - add tar interface here
-# FIXME - switch both Run to Configuration interfaces
+import simplejson
 
 class Configuration(dict):
     def __getattr__(self, name):
