@@ -47,6 +47,25 @@ class RecordStateObserver(Observer):
         """
         self.file.flush()
 
+
+class RecordStateObserverRaw(Observer):
+    """
+    This Observer saves the state time series to a file using pickle.
+    """
+    def __init__(self, filename=None, mode='wb'):
+        if filename is not None:
+            self.file = open(filename, mode)
+        else:
+            self.file = sys.stdout
+        
+    def Update(self, time, state):
+        """
+        flush so that you can see the states updated immediately
+        """
+        self.file.write(time)
+        self.file.write(state.GetOrderParameterFile().numpy_array().tostring())
+        self.file.flush()
+
 class VerboseTimestepObserver(Observer):
     """
     Observer that prints current time on every update
