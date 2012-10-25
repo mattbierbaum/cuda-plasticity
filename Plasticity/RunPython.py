@@ -115,7 +115,6 @@ import os
 def simulation(dct, get_file=local_get, put_file=local_put):
     conf = Configuration(dct)
     homedir = conf.homedir
-    cudadir = conf.cudadir
     N       = conf.N
     dim     = conf.dim
     previous= conf.previous

@@ -62,7 +62,7 @@ class RecordStateObserverRaw(Observer):
         """
         flush so that you can see the states updated immediately
         """
-        self.file.write(numpy.array([time]).tostring())
+        self.file.write(numpy.array([time]).astype('float').tostring())
         field = state.GetOrderParameterField()
         for c in field.components:
             self.file.write(field.data[c].tostring())
@@ -74,9 +74,9 @@ class VerboseTimestepObserver(Observer):
     """
     def Update(self, time, state):
         import sys
-        sys.stdout.write("t = %f\r" % time)
-        sys.stdout.flush()
-        #print "t = %f" % time   
+        #sys.stdout.write("t = %f\r" % time)
+        #sys.stdout.flush()
+        print "t = %f" % time   
 
 class VerboseTotalEnergyObserver(Observer):
     """

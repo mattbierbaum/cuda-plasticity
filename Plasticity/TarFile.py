@@ -2,6 +2,7 @@ import tarfile
 import simplejson
 import os
 from Plasticity.Configure import *
+from Plasticity.FieldInitializers import FieldInitializer
 
 #=====================================================
 # small helper functions
