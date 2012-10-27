@@ -156,8 +156,27 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     header_dynamic_nucleation(header, postfix.find("d")>=0)
     header_files(header, file_input, currstub+".plas")
 
-    #header_load(header, load_direction, load_rate, load_start)
-    header_times(header, 1.0, 0.1)# time_step, time_end)
+    # we are going to load it
+    if postfix != "r" and postfix != "d" and postfix != "":
+        # this is the first load that determines the series
+        if postfix == "0" or postfix == "1":
+            load_direction = conf.load_direction
+            load_rate = conf.load_rate
+            time_start = 50.0 
+            time_end = conf.time_end
+            load_start = 0.0
+        else:
+            old = LoadTarJSON(oldfile)
+            load_direction = old.load_direction
+            load_rate = old.load_rate
+            time_start = conf.time_start
+            time_end = conf.time_end
+            load_start = time_start*load_rate
+
+        header_load(header, load_direction, load_rate, load_start)
+        header_times(header, time_step, time_end)
+    else:
+        header_times(header, 1.0, 50.0)# time_step, time_end)
  
     headername = currstub+".h" 
     jsonname   = currstub+".json"
