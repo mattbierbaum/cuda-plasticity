@@ -59,7 +59,10 @@ def header_size(header, N, dim):
 
 def header_load(header, direction, rate, start=0.0):
     header.update({"LOADING": ""})
-    header.update({"LOAD_DEF": direction.tolist()})
+    if isinstance(direction, numpy.ndarray):
+        header.update({"LOAD_DEF": direction.tolist()})
+    else:
+        header.update({"LOAD_DEF": direction})
     header.update({"LOADING_RATE": rate})
     header.update({"LOAD_START": start})
 
@@ -130,6 +133,28 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     currstub  = unique+"_"+previous+postfix
     currfile  = unique+"_"+previous+postfix+".tar"
 
+    # we are going to load it
+    if postfix != "r" and postfix != "d" and postfix != "":
+        # this is the first load that determines the series
+        if postfix == "0" or postfix == "1":
+            load_direction = conf.load_direction
+            load_rate = conf.load_rate
+            time_start = 50.0 
+            time_step = conf.time_step
+            time_end = conf.time_end
+            load_start = 0.0
+        else:
+            old = LoadTarJSON(oldfile)
+            load_direction = old.load_direction
+            load_rate = old.load_rate
+            time_start = conf.time_start
+            time_step = conf.time_step
+            time_end = conf.time_end
+            load_start = time_start*load_rate + old.load_start
+    else:
+        time_step = 1.0
+        time_end = 50.0
+
     file_output= currstub+".plas"
     if os.path.isfile(currfile) == False:
         get_file(homedir, directory, currfile) 
@@ -140,8 +165,9 @@ def simulation(dct, get_file=local_get, put_file=local_put):
         if previous == "":
             state = FieldInitializer.GaussianRandomInitializer(gridShape, lengthscale,seed,vacancy=None)
         else:
-            get_file(homedir, directory, oldfile)
-            tt,state = LoadTarState(oldfile)
+            if os.path.isfile(oldfile) == False:
+                get_file(homedir, directory, oldfile)
+            tt,state = LoadTarState(oldfile, time=time_start)
         file_input = currstub + ".ics" 
         convertStateToCUDA(state, file_input)
     
@@ -156,27 +182,9 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     header_dynamic_nucleation(header, postfix.find("d")>=0)
     header_files(header, file_input, currstub+".plas")
 
-    # we are going to load it
     if postfix != "r" and postfix != "d" and postfix != "":
-        # this is the first load that determines the series
-        if postfix == "0" or postfix == "1":
-            load_direction = conf.load_direction
-            load_rate = conf.load_rate
-            time_start = 50.0 
-            time_end = conf.time_end
-            load_start = 0.0
-        else:
-            old = LoadTarJSON(oldfile)
-            load_direction = old.load_direction
-            load_rate = old.load_rate
-            time_start = conf.time_start
-            time_end = conf.time_end
-            load_start = time_start*load_rate
-
         header_load(header, load_direction, load_rate, load_start)
-        header_times(header, time_step, time_end)
-    else:
-        header_times(header, 1.0, 50.0)# time_step, time_end)
+    header_times(header, time_step, time_end)
  
     headername = currstub+".h" 
     jsonname   = currstub+".json"
