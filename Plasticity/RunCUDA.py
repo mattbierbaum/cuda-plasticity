@@ -106,6 +106,14 @@ def local_get(store, dir, file):
 def local_put(store, dir, file):
     return os.system("cp "+file+" "+store+"/"+dir)
 
+
+def create_local_cuda(cudadir, localdir):
+    os.mkdir(localdir) 
+    os.system("cp "+cudadir+"/* "+localdir) # purposefully not cp -r, to leave out Plasticity 
+
+def destroy_local_cuda(localdir):
+    os.system("rm -rf "+localdir)
+    
 from Plasticity.Configure import *
 #===============================================================
 # actual simulation function
@@ -193,16 +201,19 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     exname = currstub + ".exe"
 
     here = os.getcwd()
-    os.chdir(cudadir) 
-    ret = os.system("make HEADER="+here+"/"+headername)
-    os.system("rm -r obj/")
-    os.system("mv ./build/release/plasticity "+here+"/"+exname)
-    os.system("rm -r build/")
+    cudatemp = here+"/"+currstub+"_cuda"
+    
+    create_local_cuda(cudadir, cudatemp)
+    ret = os.system("cd "+cudatemp+" && make HEADER="+here+"/"+headername + " && cd -")
+    os.system("mv "+cudatemp+"/build/release/plasticity "+here+"/"+exname)
+    #os.system("rm -r "+cudatemp+"/obj/")
+    #os.system("rm -r "+cudatemp+"/build/")
+    destroy_local_cuda(cudatemp)
 
     if ret != 0:
         raise RuntimeError("Make failed!")
 
-    os.chdir(here)
+    # finally, actually run the CUDA executable
     ret = os.system("./"+exname+" --device="+str(device))
 
     if ret != 0:

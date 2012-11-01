@@ -3,8 +3,8 @@ import Plasticity.RunCUDA as run
 
 dct = {"cudadir": "/b/bierbaum/cuda-plasticity/", 
        "homedir": "/b/bierbaum/plasticity/", 
-       "N":       128,
-       "dim":      3, 
+       "N":       1024,
+       "dim":      2, 
        "previous": "", 
        "postfix":  "r", 
        "method":   "lvp"}
