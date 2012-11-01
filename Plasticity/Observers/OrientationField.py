@@ -1,5 +1,5 @@
 from numpy import sqrt, sin, cos, power, zeros, array, fromfunction, pi, abs
-import NumericalMethods
+from Plasticity import NumericalMethods
 
 ME = NumericalMethods.ME 
 
@@ -120,9 +120,9 @@ def RodriguesToUnambiguousColor(rodx,rody,rodz,maxRange=None,centerR=None):
     if centerR is None:
         centerR = (rodmin+rodmax)/2.
     colormap = zeros(list(rodx.shape)+[3],float)
-    colormap[:,:,0] = 255.*(0.5+(rodx-centerR[0])/maxRange)
-    colormap[:,:,1] = 255.*(0.5+(rody-centerR[1])/maxRange)
-    colormap[:,:,2] = 255.*(0.5+(rodz-centerR[2])/maxRange)
+    colormap[...,0] = 255.*(0.5+(rodx-centerR[0])/maxRange)
+    colormap[...,1] = 255.*(0.5+(rody-centerR[1])/maxRange)
+    colormap[...,2] = 255.*(0.5+(rodz-centerR[2])/maxRange)
     return colormap.astype(int)
 
       
