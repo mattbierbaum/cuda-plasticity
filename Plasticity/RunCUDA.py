@@ -117,7 +117,7 @@ def destroy_local_cuda(localdir):
 from Plasticity.Configure import *
 #===============================================================
 # actual simulation function
-def simulation(dct, get_file=local_get, put_file=local_put):
+def simulation(dct, get_file=local_get, put_file=local_put, delete_intermediates=True, resume=True, save_global=True):
     conf = Configuration(dct)
     homedir = conf.homedir
     cudadir = conf.cudadir
@@ -160,15 +160,17 @@ def simulation(dct, get_file=local_get, put_file=local_put):
             time_end = conf.time_end
             load_start = time_start*load_rate + old.load_start
     else:
-        time_step = 1.0
+        time_step = 2.0
         time_end = 50.0
 
     file_output= currstub+".plas"
     if os.path.isfile(currfile) == False:
-        get_file(homedir, directory, currfile) 
+        if resume == True:
+            get_file(homedir, directory, currfile) 
     if os.path.isfile(currfile) == True:
-        tar_extract(tar_open(currfile), ".plas")
-        file_input = currstub+".plas"
+        if resume == True:
+            tar_extract(tar_open(currfile), ".plas")
+            file_input = currstub+".plas"
     else:
         if previous == "":
             state = FieldInitializer.GaussianRandomInitializer(gridShape, lengthscale,seed,vacancy=None)
@@ -208,7 +210,8 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     os.system("mv "+cudatemp+"/build/release/plasticity "+here+"/"+exname)
     #os.system("rm -r "+cudatemp+"/obj/")
     #os.system("rm -r "+cudatemp+"/build/")
-    destroy_local_cuda(cudatemp)
+    if delete_intermediates == True:
+        destroy_local_cuda(cudatemp)
 
     if ret != 0:
         raise RuntimeError("Make failed!")
@@ -238,7 +241,9 @@ def simulation(dct, get_file=local_get, put_file=local_put):
         sh.move(file_output, currstub)
     os.system("tar -cvf "+currfile+" "+currstub)
     os.system("rm -rf "+currstub)
-    put_file(homedir, directory, currfile)  
+    
+    if save_global == True:
+        put_file(homedir, directory, currfile)  
 
 
 

@@ -2,67 +2,48 @@ from optparse import OptionParser
 import Plasticity.RunCUDA as run
 import copy, threading, time
 
+#dct = {"cudadir": "/b/bierbaum/cuda-plasticity/", 
+#       "homedir": "/a/bierbaum/plasticity/", 
+#       "N":       1024,
+#       "dim":      2, 
+#       "previous": "", 
+#       "postfix":  "d", 
+#       "method":   "lvp"}
+
 dct = {"cudadir": "/b/bierbaum/cuda-plasticity/", 
        "homedir": "/b/bierbaum/plasticity/", 
        "N":       1024,
        "dim":      2, 
-       "previous": "", 
-       "postfix":  "r", 
-       "method":   "lvp"}
-
-#dct = {"cudadir": "/b/bierbaum/cuda-plasticity/", 
-#       "homedir": "/b/bierbaum/plasticity/", 
-#       "N":       128,
-#       "dim":      3, 
-#       "previous": "r", 
-#       "postfix":  "0", 
-#       "method":   "lvp",
-#       "load_direction": [[-0.5, 0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,-0.5]],
-#       "load_rate": 0.05,
-#       "time_start": 50., 
-#       "time_end":  500,
-#       "time_step": 5.0}
+       "previous": "r", 
+       "postfix":  "0", 
+       "method":   "lvp",
+       "load_direction": [[-0.5, 0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,-0.5]],
+       "load_rate": 0.05,
+       "time_start": 50., 
+       "time_end":  100,
+       "time_step": 5.0}
 
 def launch(loc, i):
     loc.update({"device": i})
     loc.update({"seed":   i})
    
-    loc["method"] = "lvp"
-    loc["seed"] = i 
-    run.simulation(loc)
-    loc["seed"] = i+4
-    run.simulation(loc)
+    sizes = ((128, 3), (1024, 2))
+    meths = ("mdp", "gcd", "lvp")
+    seeds = (i,)
 
-    loc["method"] = "mdp"
-    loc["seed"] = i
-    run.simulation(loc)
-    loc["seed"] = i+4
-    run.simulation(loc)
+    import itertools
+    grps = itertools.product(sizes, meths, seeds)
+    for g in grps:
+        N, dim = g[0]
+        method = g[1]
+        seed   = g[2]
 
-    loc["method"] = "gcd"
-    loc["seed"] = i
-    run.simulation(loc)
-    loc["seed"] = i+4
-    run.simulation(loc)
+        loc["N"] = N
+        loc["dim"] = dim
+        loc["method"] = method
+        loc["seed"] = seed
+        run.simulation(loc)
 
-    #loc["postfix"] = 1
-    #loc["method"] = "lvp"
-    #loc["seed"] = i 
-    #run.simulation(loc)
-    #loc["seed"] = i+4
-    #run.simulation(loc)
-
-    #loc["method"] = "mdp"
-    #loc["seed"] = i
-    #run.simulation(loc)
-    #loc["seed"] = i+4
-    #run.simulation(loc)
-
-    #loc["method"] = "gcd"
-    #loc["seed"] = i
-    #run.simulation(loc)
-    #loc["seed"] = i+4
-    #run.simulation(loc)
     
 def main():
     threads = []

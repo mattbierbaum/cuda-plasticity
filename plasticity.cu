@@ -244,6 +244,9 @@ runTest(int argc, char** argv)
 #ifdef LOADING
         timeInc = TIME_STEP;//0.05/fabs(LOADING_RATE);
 #else
+#ifdef TIME_STEP
+        timeInc = TIME_STEP;
+#else
         if (time<=0.1) 
             timeInc = 0.01;
         else
@@ -254,6 +257,7 @@ runTest(int argc, char** argv)
                     timeInc = 0.5;
                 else
                     timeInc = 1.0;
+#endif
 #endif
         intermediateTime = time + timeInc;
         while(time < intermediateTime) {
