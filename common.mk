@@ -23,7 +23,11 @@
 # Add new SM Versions here as devices with new Compute Capability are released
 SM_VERSIONS   := 10 11 12 13 20
 
+ifeq ($(HOST),serenity) 
+CUDA_INSTALL_PATH ?= /usr/local/cuda
+else
 CUDA_INSTALL_PATH ?= /opt/cuda
+endif
 
 ifdef cuda-install
 	CUDA_INSTALL_PATH := $(cuda-install)

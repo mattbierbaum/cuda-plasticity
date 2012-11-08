@@ -59,7 +59,14 @@ CCFILES                :=
 
 #ROOTDIR := ../CUDA_WORKSHOP_UIUC/common
 #include ../CUDA_WORKSHOP_UIUC/common/common.mk
+SHELL = /bin/bash
+HOST := $(shell hostname)
+ifeq ($(HOST),serenity) 
+ROOTDIR := /media/storage/CUDA_SDK_31/C/common
+else
 ROOTDIR := /a/CUDA_SDK_31/C/common
+endif
+
 BINDIR := ./build
 export $(HEADER)
 include common.mk
