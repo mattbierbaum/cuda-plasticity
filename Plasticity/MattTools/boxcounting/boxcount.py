@@ -76,58 +76,55 @@ def twopowers(p,bs,bc):
 def ExponentFromBoxCounting(boxsize, boxcount, dim=2, cutoff=4):
     #p = np.polyfit(np.log(boxsize[boxcount.nonzero()][:cutoff]), np.log(boxcount[boxcount.nonzero()][:cutoff]), 1)
     p = opt.leastsq(twopowers, [-2,(boxcount[0])/np.power(boxsize[0],-2),3], args=(np.array(boxsize),np.array(boxcount))) 
-    print p[0]
+    #print p[0]
     return p[0]
 
-start = time.time()
 
-exp = []
-cut = []
-map = np.fromfile(open("boxcounting_test2.dat", "rb")).reshape(1024,1024)
-for i in np.arange(1.0,30,5.0):
-    b, a, s = BoxCounting(map, N=1024, dim=2, cutoff=i)
-    poly = ExponentFromBoxCounting(b, a, cutoff=2)
+def Run(map, N, dim):
+    start = time.time()
+    json  = TarFile.LoadTarJSON(filename)
+    state = TarFile.LoadTarState(filename, time=time)
+    map = state.CalculateRhoFourier().modulus()
 
-    """
-    import pylab
-    pylab.loglog(b,a)
-    pylab.show()
-    """
-    """
-    data = []
-    for (x,n) in zip(b,a):
-        data = data + ([x]*n)
-    data = np.array(data)
+    exp = []
+    cut = []
+    for i in np.arange(1.0,30,5.0):
+        b, a, s = BoxCounting(map, N=N, dim=dim, cutoff=i)
+        poly = ExponentFromBoxCounting(b, a, cutoff=2)
+    
+        import pylab
+        pylab.loglog(b,a)
+        pylab.show()
+        """
+        data = []
+        for (x,n) in zip(b,a):
+            data = data + ([x]*n)
+        data = np.array(data)
+    
+        fit = powerlaw.Fit(data, discrete=True, xmin=b[0], xmax=b[-1])
+        print fit.power_law.alpha
+        #print fit.truncated_power_law.alpha
+        """
+    
+        dimension = poly[0]
+        cut.append(i)
+        exp.append(dimension)
+        print i, dimension
+    
+        import pylab
+        pylab.loglog(b,twopowers_values(poly,b,a),'bo-',label='fit')
+        pylab.loglog(b,a,'rx',label='data')
+        pylab.show()
 
-    fit = powerlaw.Fit(data, discrete=True, xmin=b[0], xmax=b[-1])
-    print fit.power_law.alpha
-    #print fit.truncated_power_law.alpha
-    """
+    end = time.time()
+    print "total time: ", end - start
+    print "dimension = ", dimension
+    
+    x = np.arange(b[0], b[-1], 1.0)
+    y = poly[1] * (x ** poly[0])
+    
+    pl.plot(cut, exp, 'o-')
+    pl.show()
+    
 
-    dimension = poly[0]
-    cut.append(i)
-    exp.append(dimension)
-    print i, dimension
 
-    import pylab
-    pylab.loglog(b,twopowers_values(poly,b,a),'bo-',label='fit')
-    pylab.loglog(b,a,'rx',label='data')
-    pylab.show()
-
-end = time.time()
-print "total time: ", end - start
-print "dimension = ", dimension
-
-x = np.arange(b[0], b[-1], 1.0)
-y = poly[1] * (x ** poly[0])
-
-pl.plot(cut, exp, 'o-')
-pl.show()
-
-#pl.loglog(b, a, 'o-')
-#pl.loglog(x,y*(a[0]/y[0]))
-#pl.show()
-
-#pl.figure()
-#pl.imshow(s[0]) 
-#pl.show()

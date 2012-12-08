@@ -166,11 +166,16 @@ def simulation(dct, get_file=local_get, put_file=local_put, delete_intermediates
     file_output= currstub+".plas"
     if os.path.isfile(currfile) == False:
         if resume == True:
+            print "* Retrieving", currfile 
             get_file(homedir, directory, currfile) 
     if os.path.isfile(currfile) == True:
+        print "* We found", currfile
         if resume == True:
+            print "* Extracting previous state"
             tar_extract(tar_open(currfile), ".plas")
             file_input = currstub+".plas"
+            sh.move("./"+currstub+"/"+file_input, "./"+file_input)
+            sh.rmtree("./"+currstub)
     else:
         if previous == "":
             state = FieldInitializer.GaussianRandomInitializer(gridShape, lengthscale,seed,vacancy=None)
@@ -180,7 +185,7 @@ def simulation(dct, get_file=local_get, put_file=local_put, delete_intermediates
             tt,state = LoadTarState(oldfile, time=time_start)
         file_input = currstub + ".ics" 
         convertStateToCUDA(state, file_input)
-    
+        print "* Converting end of file to new ics" 
     confname = currstub+".conf"
     write_json(conf, currstub+".conf")
 
@@ -239,10 +244,12 @@ def simulation(dct, get_file=local_get, put_file=local_put, delete_intermediates
         sh.move(file_input, currstub)
     if os.path.isfile(file_output):
         sh.move(file_output, currstub)
+    print "* Taring results", currstub
     os.system("tar -cvf "+currfile+" "+currstub)
     os.system("rm -rf "+currstub)
     
     if save_global == True:
+        print "* Storing remotely", currfile
         put_file(homedir, directory, currfile)  
 
 
