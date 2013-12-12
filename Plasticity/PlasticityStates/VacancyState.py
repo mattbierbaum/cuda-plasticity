@@ -6,19 +6,6 @@ from Plasticity.Constants import *
 
 ME = NumericalMethods.ME
 
-class TensorScalarMixedField(Fields.Field):
-    """
-    General 9-component tensor field plus an additional scaler field.
-    """
-    def __init__(self, gridShape,components=None,kspace=False, allocator=None): 
-       if components is None:
-           components = [('x','x'), ('x','y'), ('x','z'), \
-                         ('y','x'), ('y','y'), ('y','z'), \
-                         ('z','x'), ('z','y'), ('z','z'), \
-                         ('s','s')]
-       Fields.Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
-
-
 class VacancyState(PlasticityState.PlasticityState):
     def __init__(self,gridShape, field=None, nu=0.3, mu=0.5, inherit=None, alpha=1.):
         PlasticityState.PlasticityState.__init__(self,gridShape,field=field,nu=nu,mu=mu,inherit=inherit)
@@ -38,7 +25,7 @@ class VacancyState(PlasticityState.PlasticityState):
 
     def UpdateOrderParameterField(self, betaP_V):
         if betaP_V is None:
-            self.betaP_V = TensorScalarMixedField(self.gridShape)
+            self.betaP_V = Fields.TensorScalarMixedField(self.gridShape)
         else:
             self.betaP_V = betaP_V 
  

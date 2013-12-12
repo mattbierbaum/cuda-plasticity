@@ -1,0 +1,53 @@
+from scipy import *
+from pylab import *
+
+#image = imread("in.png")
+# make a grid to bend around
+N = 2000
+R = 200
+shape = (N,N)
+image = arange(0,N*N).reshape((shape))
+col = (image  %(N/R)==0).astype('int')
+row = (image/N%(N/R)==0).astype('int')
+image = (col + row - row*col + 1) % 2
+
+# width, length, colors
+W,L = image.shape
+Z = fromfunction(lambda x,y: (1.0*x/W-0.5) + 1.0j*(1.0*y/L-0.5), (W,L))
+
+def mobius_transform():
+    q = 2*(Z+0.2j) / (0.1*Z -0.0j)
+
+    x = real(q).astype('int') % W
+    y = imag(q).astype('int') % L
+    return image[x,y]
+
+def poles():
+    q = 2.0 / ((Z - 0.2111j)*(Z + 0.2111j))
+
+    x = real(q).astype('int') % W
+    y = imag(q).astype('int') % L
+    return image[x,y]
+
+def log_map():
+    q = 100*log(Z) #log(abs(Z)) + 1.j*arctan2(imag(Z),real(Z))
+    
+    x = real(q).astype('int') % W
+    y = imag(q).astype('int') % L
+    return image[x,y]
+
+###================================================
+# go ahead and show all of our hard work
+###================================================
+gray()
+
+out1 = mobius_transform()
+figure(); imshow(out1, interpolation='nearest')
+
+out2 = poles()
+figure(); imshow(out2, interpolation='nearest')
+
+out3 = log_map()
+figure(); imshow(out3, interpolation='nearest')
+
+show()

@@ -5,15 +5,16 @@ from Plasticity.FieldDynamics import FieldDynamics
 from Plasticity.FieldMovers import FieldMover
 from Plasticity.FieldDynamics import VacancyDynamics
 from Plasticity.Observers import Observer
-from Plasticity.PlasticityStates import VacancyState, PlasticityState
+from Plasticity.PlasticityStates import VacancyState, PlasticityState, DisorderState
 from Plasticity.Constants import *
 from Plasticity.GridArray import GridArray
-from Plasticity.FieldDynamics import CentralUpwindHJBetaPDynamics, CentralUpwindHJBetaPGlideOnlyDynamics
+from Plasticity.FieldDynamics import CentralUpwindHJBetaPDynamics, CentralUpwindHJBetaPGlideOnlyDynamics, DisorderDynamics
 from Plasticity import NumericalMethods
 from Plasticity.Fields import Fields
 import pylab
 import numpy
 import scipy.weave as weave
+import scipy.ndimage
 
 mu,nu = 0.5,0.3 
 lamb = 2.*mu*nu/(1.-2.*nu)
@@ -64,6 +65,21 @@ class NewGlideOnlyLoadDynamics(CentralUpwindHJBetaPGlideOnlyDynamics.BetaPDynami
         else:
             return ExternalStress(sigma,self.initial+self.rate*(time-self.initT)) 
 
+class DisorderCoupledDynamics(DisorderDynamics.BetaP_DisorderDynamics):
+    def __init__(self, Dx=None, Lambda=0, coreEnergy=0, coreEnergyLog=0, disorder=None, rate=None, type='strain', \
+                       initial=numpy.array([0.,0.,0.]),initT=0.):
+        DisorderDynamics.BetaP_DisorderDynamics.__init__(self,Dx,coreEnergy,coreEnergyLog, disorder=disorder)
+        self.rate = rate
+        self.type = type
+        self.initial = initial
+        self.initT = initT
+
+    def GetSigma(self,state,time):
+        sigma = self.CalculateSigma()
+        if self.type == 'strain':
+            return ExternalStrain(sigma,self.initial+self.rate*(time-self.initT)) 
+        else:
+            return ExternalStress(sigma,self.initial+self.rate*(time-self.initT)) 
   
 class VacancyDynamicsExternalLoad(VacancyDynamics.BetaP_VacancyDynamics):
     def __init__(self, alpha=1.0, gamma=1.0, beta=1.0, Dx=None, Lambda=0, coreEnergy=0, coreEnergyLog=0, rate=None, type='strain', \
@@ -120,7 +136,6 @@ def simulation(dct, get_file=local_get, put_file=local_put):
     previous= conf.previous
     postfix = conf.postfix
     method  = conf.method
-    device  = conf.device
     seed    = conf.seed
     hash    = conf.hash
 
@@ -155,7 +170,7 @@ def simulation(dct, get_file=local_get, put_file=local_put):
 
     # ====================================================
     # begin non-standard things now
-    if method == "mdp":
+    if method.startswith("mdp"):
         if "load" in conf:
             dynamics = UpwindLoadingBetaPDynamics(Lambda=1,rate=conf["load_dir"],\
                         initial=conf["load_start"],type=conf["load_tye"])
@@ -163,7 +178,7 @@ def simulation(dct, get_file=local_get, put_file=local_put):
             dynamics = CentralUpwindHJBetaPDynamics.BetaPDynamics(Lambda=1)
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
-    if method == "gcd":
+    if method.startswith("gcd"):
         if "load" in conf:
             dynamics = UpwindLoadingBetaPDynamics(Lambda=0,rate=conf["load_dir"],\
                         initial=conf["load_start"],type=conf["load_type"])
@@ -171,13 +186,40 @@ def simulation(dct, get_file=local_get, put_file=local_put):
             dynamics = CentralUpwindHJBetaPDynamics.BetaPDynamics(Lambda=0)
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
-    if method == "lvp":
+    if method.startswith("lvp"):
         if "load" in conf:
             dynamics = NewGlideOnlyLoadDynamics(rate=conf["load_rate"],\
                         initial=conf["load_start"],type=conf["load_type"])
         else:
             dynamics = CentralUpwindHJBetaPGlideOnlyDynamics.BetaPDynamics()
         mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
+
+    if method.endswith('x'):
+        ndisorder = 100
+        disorder = numpy.zeros(state.gridShape)
+        if state.dimension == 1:
+            rx = numpy.random.randint(0, state.gridShape[0], ndisorder)
+            disorder[rx] = 1e-4*numpy.random.rand(ndisorder)
+        if state.dimension == 2:
+            rx = numpy.random.randint(0, state.gridShape[0], ndisorder)
+            ry = numpy.random.randint(0, state.gridShape[1], ndisorder)
+            disorder[rx, ry] = 1e-4*numpy.random.rand(ndisorder)
+        else:
+            rx = numpy.random.randint(0, state.gridShape[0], ndisorder)
+            ry = numpy.random.randint(0, state.gridShape[1], ndisorder)
+            rz = numpy.random.randint(0, state.gridShape[2], ndisorder)
+            disorder[rx, ry, rz] = 1e-4*numpy.random.rand(ndisorder)
+
+        disorder = GridArray.GridArray(scipy.ndimage.gaussian_filter(disorder, sigma=1))
+        newstate = DisorderState.DisorderState(state.gridShape)
+        newstate.RecoupleState(state, disorder)
+        state = newstate
+        #if "load" in conf:
+        #    dynamics = DisorderCoupledDynamics(rate=conf["load_rate"],\
+        #                initial=conf["load_start"],type=conf["load_type"])
+        #else:
+        #    dynamics = DisorderDynamics.BetaP_DisorderDynamics(disorder=disorder)
+        #mover = FieldMover.TVDRungeKutta_FieldMover(CFLsafeFactor=0.1)
 
     obsState = Observer.RecallStateObserver()
 
@@ -216,15 +258,15 @@ def simulation(dct, get_file=local_get, put_file=local_put):
 
     #=======================================================
     # begin standard things again
-    if os.path.isfile(confname):
-        sh.move(confname, currstub)
-    if os.path.isfile(file_input):
-        sh.move(file_input, currstub)
-    if os.path.isfile(file_output):
-        sh.move(file_output, currstub)
-    os.system("tar -cvf "+currfile+" "+currstub)
-    os.system("rm -rf "+currstub)
-    put_file(homedir, directory, currfile)  
+    #if os.path.isfile(confname):
+    #    sh.move(confname, currstub)
+    #if os.path.isfile(file_input):
+    #    sh.move(file_input, currstub)
+    #if os.path.isfile(file_output):
+    #    sh.move(file_output, currstub)
+    #os.system("tar -cvf "+currfile+" "+currstub)
+    #os.system("rm -rf "+currstub)
+    #put_file(homedir, directory, currfile)  
  
 
 def main():

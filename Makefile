@@ -62,7 +62,7 @@ CCFILES                :=
 SHELL = /bin/bash
 HOST := $(shell hostname)
 ifeq ($(HOST),serenity) 
-ROOTDIR := /media/storage/CUDA_SDK_31/C/common
+ROOTDIR := /media/scratch/cuda_trimmed/C/common
 else
 ROOTDIR := /a/CUDA_SDK_31/C/common
 endif

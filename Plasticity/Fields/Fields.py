@@ -345,6 +345,18 @@ class SymmetricTensorField (TensorField):
                 dict[index] = 1
         return arr
 
+class TensorScalarMixedField(Field):
+    """
+    General 9-component tensor field plus an additional scaler field.
+    """
+    def __init__(self, gridShape,components=None,kspace=False, allocator=None): 
+       if components is None:
+           components = [('x','x'), ('x','y'), ('x','z'), \
+                         ('y','x'), ('y','y'), ('y','z'), \
+                         ('z','x'), ('z','y'), ('z','z'), \
+                         ('s','s')]
+       Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
+
  
 class VectorField (Field):
     """
@@ -354,6 +366,14 @@ class VectorField (Field):
         components = ['x','y','z']
         Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
 
+
+class ScalarField(Field):
+    """
+    3 dimensional Vector field. 
+    """
+    def __init__(self, gridShape, components=None, kspace=False, allocator=None):
+        components = ['x']
+        Field.__init__(self,gridShape, components, kspace=kspace, allocator=allocator)
 
 class FCCSlipSystemField(Field):
     import scipy

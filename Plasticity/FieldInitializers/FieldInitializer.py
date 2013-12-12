@@ -3,6 +3,7 @@
 from Plasticity.PlasticityStates import RhoState
 from Plasticity.PlasticityStates import VacancyState
 from Plasticity.PlasticityStates import PlasticityState
+from Plasticity.PlasticityStates import SmecticState
 from Plasticity.Fields import Fields
 from scipy import fromfunction, sin, pi, outer, copy, fromfile, random, exp, sqrt
 from numpy import fft
@@ -124,8 +125,32 @@ def GenerateGaussianRandomArray(gridShape, temp, sigma):
         data = fft.irfftn(ktemp)
     return data 
 
+def SmecticInitializer(gridShape, sigma=0.2, seed=None):
+    if seed is None:
+        seed = 0
+    random.seed(seed)
 
-def GaussianRandomInitializer(gridShape, sigma=0.2, seed=None, slipSystem=None, slipPlanes=None, slipDirections=None, vacancy=None):
+    state = SmecticState.SmecticState(gridShape)
+    field = state.GetOrderParameterField()
+
+    Ksq = FourierSpaceTools.FourierSpaceTools(gridShape).kSq.numpy_array()
+
+    for component in field.components:
+        temp = random.normal(scale=gridShape[0],size=gridShape)
+        ktemp = fft.rfftn(temp)*(sqrt(pi)*sigma)**len(gridShape)*exp(-Ksq*sigma**2/4.)
+        field[component] = numpy.real(fft.irfftn(ktemp))
+
+    ## To make seed consistent across grid sizes and convergence comparison
+    gridShape = copy.copy(oldgrid)
+    if gridShape[0] != 128:
+        state = ResizeState(state,gridShape[0],Dim=len(gridShape))
+
+    state = ReformatState(state)
+    state.ktools = FourierSpaceTools.FourierSpaceTools(gridShape)
+    
+    return state 
+
+def GaussianRandomInitializer(gridShape, sigma=0.2, seed=None, slipSystem=None, slipPlanes=None, slipDirections=None, vacancy=None, smectic=None):
 
     oldgrid = copy.copy(gridShape)
    
@@ -144,6 +169,8 @@ def GaussianRandomInitializer(gridShape, sigma=0.2, seed=None, slipSystem=None, 
     else:
         if vacancy is not None:
             state = VacancyState.VacancyState(gridShape,alpha=vacancy)
+        elif smectic is not None:
+            state = SmecticState.SmecticState(gridShape)
         else:
             state = PlasticityState.PlasticityState(gridShape)
 

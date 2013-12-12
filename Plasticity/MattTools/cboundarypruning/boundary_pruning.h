@@ -4,6 +4,8 @@
 #include <vector>
 #include <list>
 
+#define MAX(x,y) ((x)>(y)? (x) : (y))
+
 using namespace std;
 
 class Boundary {
@@ -12,6 +14,8 @@ class Boundary {
             if (cluster0 > cluster1) {
                 swap(cluster0, cluster1);
             }
+            ptoa = 0.0;
+            id = 0;
         }
 
         ~Boundary() {
@@ -27,8 +31,10 @@ class Boundary {
         Cluster *cluster1;
     public:
         double cost;
+        double ptoa;
         double inhomogeneity;
         int length;
+        int id;
 };
 
 bool operator> (Boundary &b1, Boundary &b2)
@@ -61,6 +67,7 @@ class Cluster {
         double inhomogeneity;
         int perimeter;
         bool active;
+        int id;
 };
 
 
