@@ -7,6 +7,7 @@
 #include "assist.h"
 
 using namespace std;
+void calculate_tension_joint(Cluster *c0, Cluster *c1, double &cx, double &cy, double &sigma);
 
 template <typename T>
 class LocationAwareHeap {
@@ -189,6 +190,7 @@ inline Cluster* cocluster(Boundary &bd, Cluster *c){
 
 // FIXME - if we can avoid using globals
 // Quick and dirty way of comparing the clusters by cluster pointer
+int global_n = 0;
 class LocationAwareHeap<Boundary> *global_costs;
 class vector<Cluster> *global_clusters;
 
@@ -232,19 +234,66 @@ void PerimeterVsAreaCost(Boundary &bd) {
     Cluster *c0 = bd.get_cluster0();
     Cluster *c1 = bd.get_cluster1();
 
+    double j0, j1, j2;
+
+    calculate_tension_joint(c0, c1, j0, j1, j2);
+    double dj = sqrt(j0*j0 + j1*j1) - (sqrt(c0->centerx*c0->centerx + c0->centery*c0->centery) 
+                                     + sqrt(c1->centerx*c1->centerx + c1->centery*c1->centery));
+
     double pa0 = c0->perimeter / (double)c0->sites.size();
     double pa1 = c1->perimeter / (double)c1->sites.size();
 
-    double rat = MIN(pa0 / pa1, pa1 / pa0);
     // p/a values are smaller than 4, so this creates a
     // 'lexicographic' ordering
     //bd.cost = pa0*4 + pa1;
-    // FIXME - need a better way of dealing with "tuples"
+
 #define TUPLE_PARAMETER 32768
     bd.ptoa = MAX(pa0, pa1);
-    bd.cost = bd.ptoa*TUPLE_PARAMETER + 2*bd.length - bd.inhomogeneity;
-    // better?
-    //bd.cost = pa0*TUPLE_PARAMETER - bd.inhomogeneity / bd.length;
+    bd.cost = bd.ptoa*TUPLE_PARAMETER + 2*bd.length - bd.inhomogeneity + dj;
+}
+
+void calculate_tension_joint(Cluster *c0, Cluster *c1, double &cx, double &cy, double &sigma){
+    int count = 0;
+    cx = 0.0; cy = 0.0; sigma = 0.0;
+    vector<int>::iterator i0 = c0->sites.begin();
+    vector<int>::iterator e0 = c0->sites.end();
+
+    while (i0 != e0){
+        cx += *i0 % global_n;
+        cy += *i0 / global_n;
+        count++;
+        i0++;
+    }
+
+    i0 = c1->sites.begin();
+    e0 = c1->sites.end();
+
+    while (i0 != e0){
+        cx += *i0 % global_n;
+        cy += *i0 / global_n;
+        count++;
+        i0++;
+    }
+    cx /= count;
+    cy /= count;
+
+    i0 = c0->sites.begin();
+    e0 = c0->sites.end();
+    while (i0 != e0){
+        sigma += (*i0 % global_n - cx)*(*i0 % global_n - cx);
+        sigma += (*i0 / global_n - cx)*(*i0 / global_n - cx);
+        i0++;
+    }
+
+    i0 = c1->sites.begin();
+    e0 = c1->sites.end();
+    while (i0 != e0){
+        sigma += (*i0 % global_n - cx)*(*i0 % global_n - cx);
+        sigma += (*i0 / global_n - cx)*(*i0 / global_n - cx);
+        i0++;
+    }
+
+    sigma = sqrt(sigma / (count - 1));
 }
 
 void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &costs, SetCostFunc SetBoundaryCost, bool LocalCostFunc) {
@@ -260,6 +309,8 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
     c0->sites.insert(c0->sites.end(), c1->sites.begin(), c1->sites.end());
     c0->inhomogeneity += c1->inhomogeneity - bd.inhomogeneity;
     c0->perimeter += c1->perimeter - 2*bd.length;
+
+    calculate_tension_joint(c0, c1, c0->centerx, c0->centery, c0->sigma);
 
     // Treat boundaries
     list<int>::iterator iter0 = c0->boundary_indices.begin();
@@ -381,7 +432,8 @@ int boundary_pruning(int n, int dim,
                      double J, double pA, int verbose,
                      int *grain_count, int *bd_count){
     int size = int(pow(n, dim));
-   
+    global_n = n;
+
     class LocationAwareHeap<Boundary> costs;
     vector<Cluster> clusters(size); 
     global_costs = &costs;
@@ -402,6 +454,12 @@ int boundary_pruning(int n, int dim,
         cluster.perimeter = 2*dim;
         cluster.inhomogeneity = 0.;
         cluster.id = i;
+
+        if (dim == 2){
+            cluster.centerx = i%n;
+            cluster.centery = i/n;
+            cluster.sigma = 0.0;
+        }
     }
 
     int iloops = (dim>0)?n:1;

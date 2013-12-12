@@ -69,6 +69,9 @@ class Cluster {
         int perimeter;
         bool active;
         int id;
+
+        double centerx, centery;
+        double sigma;
 };
 
 
