@@ -235,12 +235,12 @@ void PerimeterVsAreaCost(Boundary &bd) {
     double pa0 = c0->perimeter / (double)c0->sites.size();
     double pa1 = c1->perimeter / (double)c1->sites.size();
 
+    double rat = MIN(pa0 / pa1, pa1 / pa0);
     // p/a values are smaller than 4, so this creates a
     // 'lexicographic' ordering
     //bd.cost = pa0*4 + pa1;
     // FIXME - need a better way of dealing with "tuples"
 #define TUPLE_PARAMETER 32768
-    // OLD method
     bd.ptoa = MAX(pa0, pa1);
     bd.cost = bd.ptoa*TUPLE_PARAMETER + 2*bd.length - bd.inhomogeneity;
     // better?
@@ -252,66 +252,6 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
     Cluster *c0 = bd.get_cluster0();
     Cluster *c1 = bd.get_cluster1();
 
-    if (c0->id == c1->id) printf("BADWOLF\n");
-
-    //printf("Removing %e %i %e %e\n", bd.ptoa-1.5, 2*bd.length, -bd.inhomogeneity, bd.cost);
-    if (!LocalCostFunc){
-    printf("B\n%e\n", -bd.inhomogeneity);// -- %i %e\n", bd.id, bd.inhomogeneity);
-    //c0->boundary_indices.sort( comp_bd_inhomogeneity );
-    //c1->boundary_indices.sort( comp_bd_inhomogeneity );
-        list<int>::iterator iter0 = c0->boundary_indices.begin();
-        list<int>::iterator end0 = c0->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++){
-            //printf("\t0 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-
-            Cluster *cc0 = costs[*iter0].get_cluster0();
-            Cluster *cc1 = costs[*iter0].get_cluster1();
-            double pa0 = cc0->perimeter / (double)cc0->sites.size();
-            double pa1 = cc1->perimeter / (double)cc1->sites.size();
-            printf("\t %i %e %e\n", 2*costs[*iter0].length, MAX(pa0, pa1), -costs[*iter0].inhomogeneity);
-        }
-        iter0 = c1->boundary_indices.begin();
-        end0 = c1->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++){
-            //printf("\t1 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-            Cluster *cc0 = costs[*iter0].get_cluster0();
-            Cluster *cc1 = costs[*iter0].get_cluster1();
-            double pa0 = cc0->perimeter / (double)cc0->sites.size();
-            double pa1 = cc1->perimeter / (double)cc1->sites.size();
-            printf("\t %i %e %e\n", 2*costs[*iter0].length, MAX(pa0, pa1), -costs[*iter0].inhomogeneity);
-
-        }
-    }
-    //c0->boundary_indices.sort( comp_bd_clusters);
-    //c1->boundary_indices.sort( comp_bd_clusters);
-
-    //if (!LocalCostFunc){
-    //    printf("c0: %i, %e %i\n", c0->sites.size(), c0->inhomogeneity, c0->perimeter);
-    //    printf("c1: %i, %e %i\n", c1->sites.size(), c1->inhomogeneity, c1->perimeter);
-    //    printf("\tchange: %e %e %e\n", bd.inhomogeneity, c0->inhomogeneity, c1->inhomogeneity);
-    //}
-
-    //if (c1->perimeter == 164){
-    //    printf("===============================\n");
-    //}
-
-    //if (fabs( bd.inhomogeneity - 3.30019381876e-07) < 1e-10){
-    //if (bd_index == problem_child){
-    /*if (bd.id == problem_child){
-        printf("\tchange: %e %e %e\n", bd.inhomogeneity, c0->inhomogeneity, c1->inhomogeneity);
-        printf("\tsize: %i %i\n", c0->sites.size(), c1->sites.size());
-        printf("yup bd_index = %i, id = %i\n", bd_index, bd.id);
-
-        list<int>::iterator iter0 = c0->boundary_indices.begin();
-        list<int>::iterator end0 = c0->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++)
-            printf("\tbd0 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-        iter0 = c1->boundary_indices.begin();
-        end0 = c1->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++)
-            printf("\tbd1 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-    }*/
-
     // If c0 > c1, swap for simplicity
     //if (c0 > c1)
     // FIXME - this is potentially faster
@@ -319,15 +259,11 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
         swap(c0, c1);
     c0->sites.insert(c0->sites.end(), c1->sites.begin(), c1->sites.end());
     c0->inhomogeneity += c1->inhomogeneity - bd.inhomogeneity;
-    //c0->inhomogeneity += c1->inhomogeneity - 2*bd.inhomogeneity/bd.length; //FIXME - should this be here MATT?
     c0->perimeter += c1->perimeter - 2*bd.length;
 
     // Treat boundaries
     list<int>::iterator iter0 = c0->boundary_indices.begin();
     list<int>::iterator end0 = c0->boundary_indices.end();
-    //iter0 = c0->boundary_indices.begin();
-    //end0 = c0->boundary_indices.end();
-
     list<int>::iterator iter1 = c1->boundary_indices.begin();
     list<int>::iterator end1 = c1->boundary_indices.end();
 
@@ -399,9 +335,6 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
             int len = b0.length + b1.length;
             double imh = (b0.inhomogeneity*b0.length + b1.inhomogeneity*b1.length) / (b0.length + b1.length);
 
-            //if (!LocalCostFunc)
-            //    printf("merging %i %i %e %e\n", b0.length, b1.length, b0.inhomogeneity, b1.inhomogeneity);
-
             // tc0 == tc1
             // boundary between (c0 || c1) and (tc0 || tc1)
             Boundary newbd0 = Boundary(c0, tc0, len, imh, -imh);
@@ -427,39 +360,6 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
             iter1++;
         }
     }
-
-    if (!LocalCostFunc){
-    printf("A\n%e\n", -bd.inhomogeneity); //-- %i %f\n", bd.id, bd.inhomogeneity);
-    //c0->boundary_indices.sort( comp_bd_inhomogeneity);
-    //c1->boundary_indices.sort( comp_bd_inhomogeneity);
-        iter0 = c0->boundary_indices.begin();
-        end0 = c0->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++){
-            //printf("\t0 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-            //printf("\t0 %i %e\n", 0, costs[*iter0].inhomogeneity);
-            //printf("\t0 %e %e\n", costs[*iter0].ptoa, costs[*iter0].inhomogeneity);
-            Cluster *cc0 = costs[*iter0].get_cluster0();
-            Cluster *cc1 = costs[*iter0].get_cluster1();
-            double pa0 = cc0->perimeter / (double)cc0->sites.size();
-            double pa1 = cc1->perimeter / (double)cc1->sites.size();
-            printf("\t %i %e %e\n", 2*costs[*iter0].length, MAX(pa0, pa1), -costs[*iter0].inhomogeneity);
-        }
-
-        iter0 = c1->boundary_indices.begin();
-        end0 = c1->boundary_indices.end();
-        for (iter0; iter0 != end0; iter0++){
-            //printf("\t1 %i %e\n", *iter0, costs[*iter0].inhomogeneity);
-            //printf("\t1 %e %e\n", costs[*iter0].ptoa, costs[*iter0].inhomogeneity);
-            //printf("\t1 %i %e\n", 0, costs[*iter0].inhomogeneity);
-            /*Cluster *cc0 = costs[*iter0].get_cluster0();
-            Cluster *cc1 = costs[*iter0].get_cluster1();
-            double pa0 = cc0->perimeter / (double)cc0->sites.size();
-            double pa1 = cc1->perimeter / (double)cc1->sites.size();
-            printf("\t0 %i %e %e\n", 2*costs[*iter0].length, MAX(pa0, pa1), costs[*iter0].inhomogeneity);*/
-        }
-    }
-    //c0->boundary_indices.sort( comp_bd_clusters );
-    //c1->boundary_indices.sort( comp_bd_clusters );
 
     c1->boundary_indices.clear();
     c1->sites.clear();
@@ -508,7 +408,6 @@ int boundary_pruning(int n, int dim,
     int jloops = (dim>1)?n:1;
     int kloops = (dim>2)?n:1;
 
-    printf("iloops: %i\n", iloops);
     for (int layer=0; layer<dim; layer++) {
         for (int i=0; i<iloops; i++){ 
         for (int j=0; j<jloops; j++){
