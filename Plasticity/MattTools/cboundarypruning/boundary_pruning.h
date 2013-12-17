@@ -72,6 +72,7 @@ class Cluster {
 
         double centerx, centery;
         double sigma;
+        double hom;
 };
 
 

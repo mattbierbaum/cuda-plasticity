@@ -234,11 +234,36 @@ void PerimeterVsAreaCost(Boundary &bd) {
     Cluster *c0 = bd.get_cluster0();
     Cluster *c1 = bd.get_cluster1();
 
-    double j0, j1, j2;
+    //double s0 = c0->sites.size();
+    //double s1 = c1->sites.size();
 
-    calculate_tension_joint(c0, c1, j0, j1, j2);
-    double dj = sqrt(j0*j0 + j1*j1) - (sqrt(c0->centerx*c0->centerx + c0->centery*c0->centery) 
-                                     + sqrt(c1->centerx*c1->centerx + c1->centery*c1->centery));
+    //double j0, j1, j2;
+    //calculate_tension_joint(c0, c1, j0, j1, j2);
+
+    //double dj = 0.0;
+
+    // NEW METHOD 1
+    //double dj = sqrt(j0*j0 + j1*j1) - (sqrt(c0->centerx*c0->centerx + c0->centery*c0->centery) 
+    //                                 + sqrt(c1->centerx*c1->centerx + c1->centery*c1->centery));
+
+    // NEW METHOD 2
+    //Cluster *big = (c0->perimeter*c0->sites.size()/c0->sigma > c1->perimeter*c1->sites.size()/c1->sigma) ? c0 : c1;
+    //Cluster *big = (c0->sites.size()> c1->sites.size()) ? c0 : c1; // best so far
+    //Cluster *big = (c0->perimeter > c1->perimeter) ? c0 : c1;
+    //dj = sqrt((j0-big->centerx)*(j0-big->centerx) + (j1-big->centery)*(j1-big->centery)) / bd.length;
+
+    // NEW METHOD 3
+    //double dj0 = c0->sites.size() * sqrt((j0-c0->centerx)*(j0-c0->centerx) + (j1-c0->centery)*(j1-c0->centery));
+    //double dj1 = c1->sites.size() * sqrt((j0-c1->centerx)*(j0-c1->centerx) + (j1-c1->centery)*(j1-c1->centery));
+    //double dj = (dj0 + dj1) / (c0->sites.size() + c1->sites.size());
+
+    // NEW METHOD 4
+    //double r0 = (double)s0 / (s0+s1);
+    //double r1 = (double)s1 / (s0+s1);
+    //dj = sqrt((s0*s0*((c0->centerx - j0)*(c0->centerx - j0)+(c0->centery-j1)*(c0->centery-j1))
+    //                + s1*s1*((c1->centerx - j0)*(c1->centerx - j0)+(c1->centery-j1)*(c1->centery-j1)))/((s0+s1)*(s0+s1))) * 1e-4;
+    //dj = sqrt((r0*((c0->centerx - j0)*(c0->centerx - j0)+(c0->centery-j1)*(c0->centery-j1))
+    //                + r1*((c1->centerx - j0)*(c1->centerx - j0)+(c1->centery-j1)*(c1->centery-j1))))/(s0+s1)/(s0+s1);
 
     double pa0 = c0->perimeter / (double)c0->sites.size();
     double pa1 = c1->perimeter / (double)c1->sites.size();
@@ -249,7 +274,7 @@ void PerimeterVsAreaCost(Boundary &bd) {
 
 #define TUPLE_PARAMETER 32768
     bd.ptoa = MAX(pa0, pa1);
-    bd.cost = bd.ptoa*TUPLE_PARAMETER + 2*bd.length - bd.inhomogeneity + dj;
+    bd.cost = bd.ptoa*TUPLE_PARAMETER + 2*bd.length - bd.inhomogeneity;//+ dj;
 }
 
 void calculate_tension_joint(Cluster *c0, Cluster *c1, double &cx, double &cy, double &sigma){
@@ -296,10 +321,17 @@ void calculate_tension_joint(Cluster *c0, Cluster *c1, double &cx, double &cy, d
     sigma = sqrt(sigma / (count - 1));
 }
 
+int stopthisshit = 0;
+double T = 1e100;
 void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &costs, SetCostFunc SetBoundaryCost, bool LocalCostFunc) {
     // Implement merging of clusters
     Cluster *c0 = bd.get_cluster0();
     Cluster *c1 = bd.get_cluster1();
+
+    //double Ss = c0->sites.size() * log( c0->sites.size() ) + c1->sites.size() * log( c1->sites.size() );
+    //double Se = (c0->sites.size() + c1->sites.size()) * log( c0->sites.size() + c1->sites.size() );
+
+    //double Es = bd.inhomogeneity;
 
     // If c0 > c1, swap for simplicity
     //if (c0 > c1)
@@ -310,7 +342,7 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
     c0->inhomogeneity += c1->inhomogeneity - bd.inhomogeneity;
     c0->perimeter += c1->perimeter - 2*bd.length;
 
-    calculate_tension_joint(c0, c1, c0->centerx, c0->centery, c0->sigma);
+    //calculate_tension_joint(c0, c1, c0->centerx, c0->centery, c0->sigma);
 
     // Treat boundaries
     list<int>::iterator iter0 = c0->boundary_indices.begin();
@@ -411,6 +443,9 @@ void delete_boundary(Boundary &bd, int bd_index, LocationAwareHeap<Boundary> &co
             iter1++;
         }
     }
+    //double Ee = bd.inhomogeneity;
+    //if (Ee-Es < T*(Se-Ss))
+    //    stopthisshit = 1;
 
     c1->boundary_indices.clear();
     c1->sites.clear();
@@ -565,6 +600,7 @@ int boundary_pruning(int n, int dim,
 
         // our break condition is checked in time
         if (bd.ptoa < pA) break;
+        //if (stopthisshit) break;
         //if (tcost < pA*TUPLE_PARAMETER) break;
 
         int bd_index = costs.top_index();
