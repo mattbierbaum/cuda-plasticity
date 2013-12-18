@@ -554,7 +554,7 @@ int boundary_pruning(int n, int dim,
     {
         step++;
         if (step % 50000 == 0)
-            print("%f %i\n", tcost, costs.getheap_size());
+            print("%e %i\n", tcost, costs.getheap_size());
 
         // Can't get a reference and pop immediately!!
         // Changed to non-reference - woosong
@@ -587,16 +587,19 @@ int boundary_pruning(int n, int dim,
         }
     }
 
+    double tptoa = 0;
+
     // Now do pruning
     while(costs.getheap_size() > 1)
     {
         step++;
         if (step % 50000 == 0)
-            print("%f %i\n", tcost, costs.getheap_size());
+            print("%e %i\n", tptoa, costs.getheap_size());
 
         // get the highest energy boundary
         Boundary bd = costs.top();
         tcost = bd.cost;
+        tptoa = bd.ptoa;
 
         // our break condition is checked in time
         if (bd.ptoa < pA) break;
