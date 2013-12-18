@@ -129,7 +129,82 @@ def Run(N,dim,rodrigues,prefix,J=0.00008,PtoA=1.5,Image=False,Dump=False,dovtk=F
         pickle.dump(grain[:ngrain], open("%s.grain.pickle" % output, "w"))
         pickle.dump(bdlength[:nbd], open("%s.bdlength.pickle" % output, "w"))
 
-    return mis[:nbd], grain[:ngrain], bdlength[:nbd]
+    return mis[:nbd], grain[:ngrain], bdlength[:nbd], indexmap.reshape(N,N,N)
+
+def ClusterCOM(indexmap, cindex = 0):
+    N = indexmap.shape[0]
+    r = numpy.mgrid[0:N, 0:N, 0:N].T
+
+    cluster = indexmap == cindex
+    n = cluster.sum()
+
+    real = numpy.cos(2*numpy.pi/N * r[cluster]).sum(axis=0)
+    imag = numpy.sin(2*numpy.pi/N * r[cluster]).sum(axis=0)
+
+    com = numpy.arctan2(imag, real)/(2*numpy.pi) * N
+    return com 
+
+def ClusterCenterInSpace(indexmap, cindex=0):
+    n = indexmap.shape[0]
+
+    com = ClusterCOM(indexmap, cindex=cindex).astype('int')
+    z = indexmap
+    z = numpy.roll(z, n/2-com[0], axis=2)
+    z = numpy.roll(z, n/2-com[1], axis=1)
+    z = numpy.roll(z, n/2-com[2], axis=0)
+    return z
+
+def MayaVIPlotCluster(indexmap, sizeindex=0):
+    from mayavi import mlab
+
+    h, bs = numpy.histogram(indexmap.flatten(), bins=xrange(0,indexmap.max()))
+    h, bs = (numpy.array(t) for t in zip(*sorted(zip(h, bs[:-1]))))
+
+    cindex = bs[len(h) - sizeindex - 1]
+    centered = ClusterCenterInSpace(indexmap, cindex)
+    print "Cluster index:", cindex
+
+    p = (centered == cindex).astype('float')
+    plot = mlab.contour3d(p)
+
+    a,b, dist, c = mlab.view()
+    mlab.view(0, 90, 80./75*dist)
+    return plot 
+
+def AnimateOpenPlot():
+    from mayavi import mlab
+    for i,angle in enumerate(numpy.arange(0, 360, 5)):
+        mlab.view(angle, 90)
+        #mlab.savefig("rot_%04d.png" % i)
+
+def CalculateAnisotropy(indexmap, cindex=0):
+    N = indexmap.shape[0]
+    centered = ClusterCenterInSpace(indexmap, cindex)
+    cluster = (centered == cindex)
+    n = cluster.sum()
+
+    com = ClusterCOM(centered, cindex)
+    com = numpy.array(indexmap.shape)/2
+    r = numpy.mgrid[0:N, 0:N, 0:N].T
+  
+    return numpy.sqrt((r[cluster] - com)**2).sum(axis=0)
+
+def CalculateAnisotropyDistribution(indexmap):
+    h, bs = numpy.histogram(indexmap.flatten(), bins=xrange(0,indexmap.max()))
+    h, bs = (numpy.array(t) for t in zip(*sorted(zip(h, bs[:-1]))))
+
+    nbig = (h>512).sum()
+    anis = []
+
+    for cindex in xrange(nbig):
+        anis.append(CalculateAnisotropy(indexmap, cindex))
+
+    return numpy.array(anis)
+
+def AnisotropyPlotRatios(anis):
+    import pylab as pl
+    pl.hist(anis[:,0]/anis[:,2]*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
+    pl.hist(anis[:,1]/anis[:,2]*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
 
 """
 import cPickle as pickle
