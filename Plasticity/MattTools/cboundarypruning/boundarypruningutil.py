@@ -7,6 +7,7 @@ from Plasticity import TarFile
 from Plasticity.Observers import OrientationField
 #sys.path += ["bp/build/lib.linux-x86_64-2.6", "bp/build/src.linux-x86_64-2.6"]
 import boundarypruning as bp
+import cPickle as pickle
 
 def GetReconstructionWithBoundary2D(N,orientationmap,filename,indexmap):
     newindexmap = numpy.empty(numpy.array(indexmap.shape[:2])*4)
@@ -125,9 +126,10 @@ def Run(N,dim,rodrigues,prefix,J=0.00008,PtoA=1.5,Image=False,Dump=False,dovtk=F
                      
     
     if Dump == True:
-        pickle.dump(mis[:nbd], open("%s.mis.pickle" % output, "w"))
-        pickle.dump(grain[:ngrain], open("%s.grain.pickle" % output, "w"))
-        pickle.dump(bdlength[:nbd], open("%s.bdlength.pickle" % output, "w"))
+        pickle.dump(mis[:nbd], open("%s.mis.pickle" % output, "w"), protocol=-1)
+        pickle.dump(grain[:ngrain], open("%s.grain.pickle" % output, "w"), protocol=-1)
+        pickle.dump(bdlength[:nbd], open("%s.bdlength.pickle" % output, "w"), protocol=-1)
+        pickle.dump(indexmap, open("%s.indexmap.pickle" % output, "w"), protocol=-1)
 
     return mis[:nbd], grain[:ngrain], bdlength[:nbd], indexmap.reshape(N,N,N)
 
@@ -175,7 +177,7 @@ def AnimateOpenPlot():
     from mayavi import mlab
     for i,angle in enumerate(numpy.arange(0, 360, 5)):
         mlab.view(angle, 90)
-        #mlab.savefig("rot_%04d.png" % i)
+        mlab.savefig("rot_%04d.png" % i)
 
 def CalculateAnisotropy(indexmap, cindex=0):
     N = indexmap.shape[0]
