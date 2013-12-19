@@ -122,6 +122,45 @@ def prune_set(time=None):
 
     return all_mis, all_grain, all_bdlength, all_mis3, all_grain3, all_bdlength3
 
+
+def prune_timeseries():
+    run_dir   = "/a/bierbaum/plasticity/keeneland"
+    type = "lvp"
+    dim   = 3
+    size  = 128
+    seed  = 0
+    post = "d0"
+
+    stub = type+str(dim)+"d"+str(size)
+    folder = run_dir#+"/"+stub
+    file = folder+"/"+stub+"_s"+str(seed)+"_"+post+".tar"
+
+    outfolder = "./bp_timeseries_"+stub
+
+    try:
+        check_call(["mkdir", outfolder])
+    except Exception as e:
+        print "Folder", outfolder, "already exists, probably"
+
+    ftype = 'tar'
+    if not isfile(file):
+        file = folder+"/"+stub+"_s"+str(seed)+"_"+post+".plas"
+        ftype = 'plas'
+        if not isfile(file):
+            print "Could not find (skipping) ", file
+
+    for time in np.arange(0, 400, 1):
+        print "Processing", file
+        if ftype == 'tar':
+            t,s = TarFile.LoadTarState(file, time=time)
+        else:
+            t,s = FieldInitializer.LoadStateRaw(file, size, dim, time=time, hastimes=True)
+        rod = s.CalculateRotationRodrigues()
+
+        print "3D volume:"
+        bp.Run(size, 3, rod, outfolder+splitext(basename(file))[0]+"_3d_t=%03d_" % int(time), J=3e-7, PtoA=1.2, Image=False, Dump=True)
+
+
 def slice_one_3d(file):
     if not isfile(file):
         print "Could not find (skipping) ", file
@@ -137,4 +176,5 @@ def slice_one_3d(file):
             trod['z'] = rod['z'][:,:,i]
             mis, grain, bdlength = bp.Run(cof['N'], 2, trod, splitext(basename(file))[0]+"%03d_"%i, J=7e-7, PtoA=1.5, Image=True, Dump=False)
 
-prune_set()
+#prune_set(200)
+prune_timeseries()

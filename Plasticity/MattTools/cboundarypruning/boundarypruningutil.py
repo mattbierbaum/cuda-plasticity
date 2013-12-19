@@ -124,14 +124,15 @@ def Run(N,dim,rodrigues,prefix,J=0.00008,PtoA=1.5,Image=False,Dump=False,dovtk=F
         if dim == 3:
             GetReconstructionWithBoundary3D(N,orientationmap,output,indexmap=indexmap.reshape(N,N,N),dovtk=dovtk)
                      
-    
     if Dump == True:
         pickle.dump(mis[:nbd], open("%s.mis.pickle" % output, "w"), protocol=-1)
         pickle.dump(grain[:ngrain], open("%s.grain.pickle" % output, "w"), protocol=-1)
         pickle.dump(bdlength[:nbd], open("%s.bdlength.pickle" % output, "w"), protocol=-1)
         pickle.dump(indexmap, open("%s.indexmap.pickle" % output, "w"), protocol=-1)
 
-    return mis[:nbd], grain[:ngrain], bdlength[:nbd], indexmap.reshape(N,N,N)
+    if dim == 3:
+        return mis[:nbd], grain[:ngrain], bdlength[:nbd], indexmap.reshape(N,N,N)
+    return mis[:nbd], grain[:ngrain], bdlength[:nbd], indexmap.reshape(N,N)
 
 def ClusterCOM(indexmap, cindex = 0):
     N = indexmap.shape[0]
