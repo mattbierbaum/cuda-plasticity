@@ -9,6 +9,7 @@ from Plasticity.FieldInitializers import FieldInitializer
 
 def prune_set(time=None):
     run_dir   = "/a/bierbaum/plasticity/keeneland"
+    run_dir   = "/media/scratch/plasticity"
     run_types = ["mdp", "lvp", "gcd" ]
     run_dim   = [     3       ]
     run_size  = [  128     ]
@@ -26,9 +27,9 @@ def prune_set(time=None):
     all_bdlength3 = []
 
     if time is not None:
-        outfolder = "./bp_t=%0.3f/" % time
+        outfolder = run_dir+"/bp_t_%0.3f/" % time
     else:
-        outfolder = "./bp_relax/"
+        outfolder = run_dir+"/bp_relax/"
 
     try:
         check_call(["mkdir", outfolder])
@@ -76,11 +77,12 @@ def prune_set(time=None):
                         trod['z'] = rod['z'][:,:,i]
                         mis, grain, bdlength, throwaway = bp.Run(size, 2, trod, outfolder+splitext(basename(file))[0]+"_2d%03d_"%i, J=8e-7, PtoA=1.5, Image=False, Dump=True)
 
+                        type_mis = np.hstack((type_mis, mis))
+                        type_grain = np.hstack((type_grain, grain))
+                        type_bdlength = np.hstack((type_bdlength, bdlength))
+
                     print "3D volume:"
                     mis3, grain3, bdlength3, throwaway = bp.Run(size, 3, rod, outfolder+splitext(basename(file))[0]+"_3d_", J=3e-7, PtoA=1.2, Image=False, Dump=True)
-                    type_mis = np.hstack((type_mis, mis))
-                    type_grain = np.hstack((type_grain, grain))
-                    type_bdlength = np.hstack((type_bdlength, bdlength))
 
                     type_mis3 = np.hstack((type_mis3, mis3))
                     type_grain3 = np.hstack((type_grain3, grain3))
@@ -120,11 +122,12 @@ def prune_set(time=None):
         f = powerlaw.Fit(y)
         print f.alpha
 
-    return all_mis, all_grain, all_bdlength, all_mis3, all_grain3, all_bdlength3
+    return all_mis, all_grain, all_bdlength #, all_mis3, all_grain3, all_bdlength3
 
 
 def prune_timeseries():
-    run_dir   = "/a/bierbaum/plasticity/keeneland"
+    #run_dir   = "/a/bierbaum/plasticity/keeneland"
+    run_dir   = "/media/scratch/plasticity"
     type = "lvp"
     dim   = 3
     size  = 128
@@ -135,7 +138,7 @@ def prune_timeseries():
     folder = run_dir#+"/"+stub
     file = folder+"/"+stub+"_s"+str(seed)+"_"+post+".tar"
 
-    outfolder = "./bp_timeseries_"+stub
+    outfolder = "./bp_timeseries_"+stub+"/"
 
     try:
         check_call(["mkdir", outfolder])
@@ -176,5 +179,7 @@ def slice_one_3d(file):
             trod['z'] = rod['z'][:,:,i]
             mis, grain, bdlength = bp.Run(cof['N'], 2, trod, splitext(basename(file))[0]+"%03d_"%i, J=7e-7, PtoA=1.5, Image=True, Dump=False)
 
+for t in np.arange(00,100,10):
+    prune_set(t)
 #prune_set(200)
-prune_timeseries()
+#prune_timeseries()

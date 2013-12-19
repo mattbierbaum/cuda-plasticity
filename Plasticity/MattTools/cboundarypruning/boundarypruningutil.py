@@ -157,13 +157,17 @@ def ClusterCenterInSpace(indexmap, cindex=0):
     z = numpy.roll(z, n/2-com[2], axis=0)
     return z
 
-def MayaVIPlotCluster(indexmap, sizeindex=0):
+def MayaVIPlotCluster(indexmap, sizeindex=0, clusterindex=None):
     from mayavi import mlab
 
-    h, bs = numpy.histogram(indexmap.flatten(), bins=xrange(0,indexmap.max()))
-    h, bs = (numpy.array(t) for t in zip(*sorted(zip(h, bs[:-1]))))
+    if not clusterindex:
+        h, bs = numpy.histogram(indexmap.flatten(), bins=xrange(0,indexmap.max()))
+        h, bs = (numpy.array(t) for t in zip(*sorted(zip(h, bs[:-1]))))
 
-    cindex = bs[len(h) - sizeindex - 1]
+        cindex = bs[len(h) - sizeindex - 1]
+    else:
+        cindex = clusterindex
+
     centered = ClusterCenterInSpace(indexmap, cindex)
     print "Cluster index:", cindex
 

@@ -4,6 +4,23 @@ import pylab as pl
 from functools import partial
 from Plasticity.Observers.BasicStatisticalTools import FittingPowerLawForHistogram
 
+def setPlotOptions(labelsize=20,tickmajor=20,tickminor=10,markersize=10,legendsize=20,legendspacing=1.5,labelsizexy=16):
+    pl.rcdefaults()
+    pl.rcParams.update({'xtick.labelsize':labelsizexy,\
+            'xtick.major.size':tickmajor,\
+            'xtick.minor.size':tickminor,\
+            'ytick.labelsize':labelsizexy,\
+            'ytick.major.size':tickmajor,\
+            'ytick.minor.size':tickminor,\
+            'lines.markersize':markersize,\
+            'axes.labelsize':labelsize,\
+            'legend.fontsize':legendsize,\
+            'legend.columnspacing':legendspacing,\
+            })
+
+setPlotOptions()
+
+
 def CalculateSinglePowerLaw(grains, cmin=35, cmax=180, bins=np.logspace(1,3, 100)):
     y,x = np.histogram(grains, bins=bins)
 
