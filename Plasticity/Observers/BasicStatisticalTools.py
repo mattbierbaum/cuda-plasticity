@@ -77,7 +77,7 @@ def FittingPowerlawForBoxCountingMethod(data,boxmin=None,boxmax=None):
     C,m = PowerlawFittingFromPoints(result,[1.,2.])
     return C, m
 
-def FittingPowerLawForHistorgram(histresult,xmax,xlow,xup):
+def FittingPowerLawForHistogram(histresult,xmax,xlow,xup):
     x,y = histresult[0], histresult[1]
     newx = (x>xlow*xmax)*(x<xup*xmax)*x
     fitx = x[newx.nonzero()]
