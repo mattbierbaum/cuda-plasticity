@@ -172,7 +172,7 @@ def GrainSizeCollapseCompare(grains, labels, alpha=2.5):
 
 def GrainSizeCollapseCompareInset(grains, labels, alpha=2.5):
     """ good values for alpha seem to be 4, but 2.5 for experiment """
-    colors = ['b', 'r', 'g']
+    colors = ['b', 'r', 'g', 'y']
 
     for i, (grain, label) in enumerate(zip(grains, labels)):
         t = np.sqrt(grain)/np.sqrt(grain).mean()
@@ -201,7 +201,7 @@ def GrainSizeCollapseCompareInset(grains, labels, alpha=2.5):
         fit, error = FittingPowerLawForHistogram([x,y], 1, 1, 2.7)
         print fit, error
         print abs(error/fit)
-        if abs(error[1] / fit[1]) < 0.045:
+        if abs(error[1] / fit[1]) < 0.045: # and i == 1: #FIX for certain situations
             xi = 24
             scale = y[xi] / x[xi]**fit[1]
             pl.plot(x, scale * x**fit[1], 'k-', label=r"Fit, $\alpha$ = %0.1f $\pm$ %0.1f" % (fit[1], error[1]))
@@ -226,7 +226,7 @@ def fit_alpha(x, y):
 
 def MisorientationScalingCollapseCompareInset(misses, bdlengths, labels, alpha=2.5):
     """ good values for alpha seem to be 4, but 2.5 for experiment """
-    colors = ['b', 'r', 'g']
+    colors = ['b', 'r', 'g', 'y']
 
     pl.rcParams.update({'legend.fontsize': 14,
             'legend.columnspacing':1.2,

@@ -211,8 +211,8 @@ def CalculateAnisotropyDistribution(indexmap):
 
 def AnisotropyPlotRatios(anis):
     import pylab as pl
-    pl.hist(anis[:,0]/anis[:,2]*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
-    pl.hist(anis[:,1]/anis[:,2]*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
+    pl.hist(np.log(anis[:,0]/anis[:,2])*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
+    pl.hist(np.log(anis[:,1]/anis[:,2])*numpy.sqrt(2), bins=numpy.arange(0,3,0.1))
 
 """
 import cPickle as pickle

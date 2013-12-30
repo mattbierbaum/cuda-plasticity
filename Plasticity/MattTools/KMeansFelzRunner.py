@@ -31,9 +31,9 @@ def prune_set(time=None, do2d=True, do3d=False):
     all_bdlength3 = []
 
     if time is not None:
-        outfolder = run_dir+"/kmeans_bp_t_%0.3f/" % time
+        outfolder = run_dir+"/felz_bp_t_%0.3f/" % time
     else:
-        outfolder = run_dir+"/kmeans_bp_relax/"
+        outfolder = run_dir+"/felz_bp_relax/"
 
     try:
         check_call(["mkdir", outfolder])
@@ -83,7 +83,7 @@ def prune_set(time=None, do2d=True, do3d=False):
                             trod['y'] = rod['y'][:,:,i]
                             trod['z'] = rod['z'][:,:,i]
                             #mis, grain, bdlength, throwaway = bp.Run(size, 2, trod, outfolder+splitext(basename(file))[0]+"_2d%03d_"%i, J=8e-7, PtoA=1.5, Image=False, Dump=True)
-                            segs = KMeansPruning.SegmentationSLIC_run_2d(trod)
+                            segs = KMeansPruning.SegmentationFelz_run_2d(trod)
                             mis, grain, bdlength = SegmentationConversion.SegmentationConvert2D(trod['x'], trod['y'], trod['z'], segs)
 
                             pickle.dump(mis, open("%s.mis.pickle" % prefix, "w"), protocol=-1) 
@@ -207,5 +207,5 @@ def slice_one_3d(file):
 
 #for t in np.arange(0,400,10):
 #    prune_set(t)
-prune_set(40, do2d=False, do3d=True)
+prune_set(0, do2d=True, do3d=False)
 #prune_timeseries()
