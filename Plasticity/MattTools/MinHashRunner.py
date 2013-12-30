@@ -207,5 +207,5 @@ def slice_one_3d(file):
 
 #for t in np.arange(0,400,10):
 #    prune_set(t)
-prune_set(0, do2d=True, do3d=False)
+prune_set(0, do2d=False, do3d=True)
 #prune_timeseries()
