@@ -18,30 +18,67 @@ def SegmentationSLIC(filename='/media/scratch/plasticity/lvp2d1024_s0_d.tar', ti
     plt.imshow(mark_boundaries(img, segments_slic))
     plt.show()
 
-xs = np.fromfile('rodx.bin').reshape((128,128))
-ys = np.fromfile('rody.bin').reshape((128,128))
-zs = np.fromfile('rodz.bin').reshape((128,128))
+def LSH_run_2d(rod):
+    xs = rod['x']
+    ys = rod['y']
+    zs = rod['z']
+    
+    cols = np.zeros((128,128,3))
+    full = np.zeros((128,128,3))
+    full[:,:,0] = xs
+    full[:,:,1] = ys
+    full[:,:,2] = zs
+    
+    cmap = matplotlib.colors.ListedColormap ( np.random.rand(257,3))
+ 
+    out = np.zeros((128,128))
 
-cols = np.zeros((128,128,3))
-full = np.zeros((128,128,3))
-full[:,:,0] = xs
-full[:,:,1] = ys
-full[:,:,2] = zs
+    N = 16
+    q = (full.dot(np.random.randn(3,N)) > 0).astype('int64')
 
-cmap = matplotlib.colors.ListedColormap ( np.random.rand(257,3))
+    for i in xrange(N):
+        out += q[..., i] * 2**i
+    #q = np.packbits((full.dot(np.random.randn(3,16)) > 0).astype('int64'),-1).squeeze()
+    #plt.imshow(q,cmap=cmap,interpolation='none')
+   
+    return out
+    #foo = np.zeros((128,128))
+    #for i in xrange(100): 
+    #    q = np.packbits((full.dot(np.random.randn(3,4)) > 0).astype('int'),-1).squeeze()
+    #    g = (np.array(np.gradient(q))**2).sum(0) > 0
+    #    foo += g;
+    #
+    #cols[:,:,0] = xs
+    #cols[:,:,1] = ys
+    #cols[:,:,2] = zs
+    #cols = cols - cols.min(0).min(0)
+    #cols = cols / cols.max(0).max(0)
 
-q = np.packbits((full.dot(np.random.randn(3,4)) > 0).astype('int'),-1).squeeze()
-plt.imshow(q,cmap=cmap,interpolation='none')
+    #return foo
 
-foo = np.zeros((128,128))
-for i in xrange(100): 
-    q = np.packbits((full.dot(np.random.randn(3,4)) > 0).astype('int'),-1).squeeze()
-    g = (np.array(np.gradient(q))**2).sum(0) > 0
-    foo += g;
 
-cols[:,:,0] = xs
-cols[:,:,1] = ys
-cols[:,:,2] = zs
-cols = cols - cols.min(0).min(0)
-cols = cols / cols.max(0).max(0)
+def LSH_run_3d(rod):
+    xs = rod['x']
+    ys = rod['y']
+    zs = rod['z']
+    
+    cols = np.zeros((128,128,128,3))
+    full = np.zeros((128,128,128,3))
+    full[:,:,:,0] = xs
+    full[:,:,:,1] = ys
+    full[:,:,:,2] = zs
+    
+    cmap = matplotlib.colors.ListedColormap ( np.random.rand(257,3))
+ 
+    out = np.zeros((128,128,128))
+
+    N = 64
+    q = (full.dot(np.random.randn(3,N)) > 0).astype('int64')
+
+    for i in xrange(N):
+        out += q[..., i] * 2**i
+    #q = np.packbits((full.dot(np.random.randn(3,16)) > 0).astype('int64'),-1).squeeze()
+    #plt.imshow(q,cmap=cmap,interpolation='none')
+   
+    return out
 
