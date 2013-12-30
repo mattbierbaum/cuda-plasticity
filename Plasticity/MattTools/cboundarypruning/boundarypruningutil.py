@@ -175,14 +175,15 @@ def MayaVIPlotCluster(indexmap, sizeindex=0, clusterindex=None):
     plot = mlab.contour3d(p)
 
     a,b, dist, c = mlab.view()
-    mlab.view(0, 90, 80./75*dist)
-    return plot 
+    mlab.view(0, 90, 80)#80./75*dist)
+    return cindex
 
-def AnimateOpenPlot():
+def AnimateOpenPlot(start=0, end=360, stepsize=5, istart=0):
     from mayavi import mlab
-    for i,angle in enumerate(numpy.arange(0, 360, 5)):
+    for i,angle in enumerate(numpy.arange(start, end, stepsize)):
         mlab.view(angle, 90)
-        mlab.savefig("rot_%04d.png" % i)
+        mlab.savefig("rot_%04d.png" % (i+istart))
+    return i, angle
 
 def CalculateAnisotropy(indexmap, cindex=0):
     N = indexmap.shape[0]

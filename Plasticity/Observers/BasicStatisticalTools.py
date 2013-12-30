@@ -14,9 +14,13 @@ def PowerlawFittingFromPoints(data,p0):
     if data.shape[1] != 2:
         raise ValueError, "The shape of the input data must be (N,2)!"
     residuals = lambda p,y,x: y-p[0]*numpy.power(x,p[1])
-    plsq = leastsq(residuals, p0, args=(data[:,1],data[:,0]))
+    plsq = leastsq(residuals, p0, args=(data[:,1],data[:,0]), full_output=True)
     print "The fitting parameters are:  C = ",plsq[0][0],"  alpha = ",plsq[0][1]
-    return plsq[0] 
+
+    s_sq = (plsq[2]['fvec']**2).sum()/(len(data)-len(p0))
+    pcov = plsq[1] * s_sq
+
+    return plsq[0], numpy.sqrt(numpy.array([pcov[0][0], pcov[1][1]]))
 
 def BoxCountingMethod(data,cutoff):
     """

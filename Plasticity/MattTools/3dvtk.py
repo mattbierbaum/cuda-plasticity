@@ -1,12 +1,14 @@
-import PlasticitySystem
-import FieldInitializer
+from Plasticity import PlasticitySystem
+from Plasticity.FieldInitializers import FieldInitializer
 import numpy
 import vtk
-import OrientationField
+from Plasticity.Observers import OrientationField
+from Plasticity import TarFile
 
 N=128
 #t, st = FieldInitializer.LoadStateRaw("/a/woosong/cuda_3d/slip/3d_cuda_sliprelax_mix0.9_t1.0_128_dp_0_L1.plas", N, 3)
-t,st = FieldInitializer.LoadState("3d_vac_cuda_relax_128_dp_0_L0.save")
+t,st = TarFile.LoadTarState("/media/scratch/plasticity/lvp3d128_s4_d.tar") 
+#FieldInitializer.LoadState("3d_vac_cuda_relax_128_dp_0_L0.save")
 
 print 't=',t
 rho = st.CalculateRhoSymmetric()
@@ -66,7 +68,7 @@ renderWin.AddRenderer(renderer)
 
 renderer.AddVolume(volume)
 renderer.SetBackground(0.7,0.7,0.7)
-renderWin.SetSize(800, 800)
+renderWin.SetSize(400, 400)
 
 def exitCheck(obj, event):
     if obj.GetEventPending() != 0:
@@ -78,23 +80,32 @@ renderWin.AddObserver("AbortCheckEvent", exitCheck)
 renderWin.Render()
 #renderInteractor.Start()
 
-writer = vtk.vtkFFMPEGWriter()
-writer.SetQuality(2)
-writer.SetRate(24)
+#writer = vtk.vtkFFMPEGWriter()
+#writer.SetQuality(2)
+#writer.SetRate(24)
+#w2i = vtk.vtkWindowToImageFilter()
+#w2i.SetInput(renderWin)
+#writer.SetInputConnection(w2i.GetOutputPort())
+#writer.SetFileName('movie.avi')
+#writer.Start()
+
+writer = vtk.vtkPNGWriter()
 w2i = vtk.vtkWindowToImageFilter()
 w2i.SetInput(renderWin)
 writer.SetInputConnection(w2i.GetOutputPort())
 writer.SetFileName('movie.avi')
-writer.Start()
 
 renderWin.Render()
 ac = renderer.GetActiveCamera()
-for i in range(360):
-    ac.Azimuth(1)
-    ac.Elevation(1*((-1)**(int(i/90))))
+ac.Elevation(30)
+num = 120
+for i in range(num):
+    ac.Azimuth(360/num)
+    #ac.Elevation(1*((-1)**(int(i/90))))
     renderer.ResetCameraClippingRange()
     renderWin.Render()
     w2i.Modified()
+    writer.SetFileName("movie_%03d.png" % i)
     writer.Write()
-writer.End()
+#writer.End()
 

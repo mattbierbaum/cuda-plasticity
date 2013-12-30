@@ -7,13 +7,11 @@ import powerlaw
 from subprocess import check_call
 from Plasticity.FieldInitializers import FieldInitializer
 
+import cPickle as pickle
+import KMeansPruning
+import SegmentationConversion
+
 def prune_set(time=None, do2d=True, do3d=False):
-    J3d = 3e-7
-    PtoA3d = 1.2
-
-    J2d = 8e-7
-    PtoA2d = 1.5
-
     run_dir   = "/a/bierbaum/plasticity/keeneland"
     run_dir   = "/media/scratch/plasticity"
     run_types = ["mdp", "lvp", "gcd" ]
@@ -33,9 +31,9 @@ def prune_set(time=None, do2d=True, do3d=False):
     all_bdlength3 = []
 
     if time is not None:
-        outfolder = run_dir+"/bp_t_%0.3f/" % time
+        outfolder = run_dir+"/kmeans_bp_t_%0.3f/" % time
     else:
-        outfolder = run_dir+"/bp_relax/"
+        outfolder = run_dir+"/kmeans_bp_relax/"
 
     try:
         check_call(["mkdir", outfolder])
@@ -78,13 +76,20 @@ def prune_set(time=None, do2d=True, do3d=False):
                     if do2d:
                         print "2D slices:"
                         for i in range(128):
+                            prefix = outfolder+splitext(basename(file))[0]+"_2d%03d_" % i
                             print "\t", i
                             trod ={}
                             trod['x'] = rod['x'][:,:,i]
                             trod['y'] = rod['y'][:,:,i]
                             trod['z'] = rod['z'][:,:,i]
-                            mis, grain, bdlength, throwaway = bp.Run(size, 2, trod, outfolder+splitext(basename(file))[0]+"_2d%03d_"%i, J=J2d, PtoA=PtoA2d, Image=False, Dump=True)
-                            #mis, grain, bdlength, throwaway = bp.Run(size, 2, trod, outfolder+splitext(basename(file))[0]+"_2d%03d_"%i, J=2.5e-6, PtoA=1.2, Image=False, Dump=True)
+                            #mis, grain, bdlength, throwaway = bp.Run(size, 2, trod, outfolder+splitext(basename(file))[0]+"_2d%03d_"%i, J=8e-7, PtoA=1.5, Image=False, Dump=True)
+                            segs = KMeansPruning.SegmentationSLIC_run_2d(trod)
+                            mis, grain, bdlength = SegmentationConversion.SegmentationConvert2D(trod['x'], trod['y'], trod['z'], segs)
+
+                            pickle.dump(mis, open("%s.mis.pickle" % prefix, "w"), protocol=-1) 
+                            pickle.dump(grain, open("%s.grain.pickle" % prefix, "w"), protocol=-1) 
+                            pickle.dump(bdlength, open("%s.bdlength.pickle" % prefix, "w"), protocol=-1) 
+                            pickle.dump(segs, open("%s.indexmap.pickle" % prefix, "w"), protocol=-1) 
 
                             type_mis = np.hstack((type_mis, mis))
                             type_grain = np.hstack((type_grain, grain))
@@ -92,7 +97,14 @@ def prune_set(time=None, do2d=True, do3d=False):
 
                     if do3d:
                         print "3D volume:"
-                        mis3, grain3, bdlength3, throwaway = bp.Run(size, 3, rod, outfolder+splitext(basename(file))[0]+"_3d_", J=J3d, PtoA=PtoA3d, Image=False, Dump=True)
+                        prefix = outfolder+splitext(basename(file))[0]+"_3d_"
+                        segs = KMeansPruning.SegmentationSLIC_run_3d(rod)
+                        mis3, grain3, bdlength3 = SegmentationConversion.SegmentationConvert3D(rod['x'], rod['y'], rod['z'], segs)
+
+                        pickle.dump(mis3, open("%s.mis.pickle" % prefix, "w"), protocol=-1) 
+                        pickle.dump(grain3, open("%s.grain.pickle" % prefix, "w"), protocol=-1) 
+                        pickle.dump(bdlength3, open("%s.bdlength.pickle" % prefix, "w"), protocol=-1) 
+                        pickle.dump(segs, open("%s.indexmap.pickle" % prefix, "w"), protocol=-1) 
 
                         type_mis3 = np.hstack((type_mis3, mis3))
                         type_grain3 = np.hstack((type_grain3, grain3))
@@ -108,10 +120,8 @@ def prune_set(time=None, do2d=True, do3d=False):
             all_grain3.append(type_grain3)
             all_bdlength3.append(type_bdlength3)
 
-
-    import pickle
     if do2d:
-        pickle.dump({"mis": all_mis, "grain": all_grain, "length": all_bdlength}, open(outfolder+"prune_all_%0.1e_%0.1e.pickle" % (J2d, PtoA2d), "w"))
+        pickle.dump({"mis": all_mis, "grain": all_grain, "length": all_bdlength}, open(outfolder+"prune_all.pickle", "w"))
 
         for i in range(len(run_types)):
             pl.figure();pl.hist(all_grain[i], bins=np.logspace(0,4,100), histtype='step')
@@ -125,7 +135,7 @@ def prune_set(time=None, do2d=True, do3d=False):
             print f.alpha
 
     if do3d:
-        pickle.dump({"mis": all_mis3, "grain": all_grain3, "length": all_bdlength3}, open(outfolder+"prune_all_3d_%0.1e_%0.1e.pickle" % (J3d, PtoA3d), "w"))
+        pickle.dump({"mis": all_mis3, "grain": all_grain3, "length": all_bdlength3}, open(outfolder+"prune_all_3d.pickle", "w"))
 
         for i in range(len(run_types)):
             pl.figure();pl.hist(all_grain3[i], bins=np.logspace(0,4,100), histtype='step')
@@ -195,7 +205,7 @@ def slice_one_3d(file):
             trod['z'] = rod['z'][:,:,i]
             mis, grain, bdlength = bp.Run(cof['N'], 2, trod, splitext(basename(file))[0]+"%03d_"%i, J=7e-7, PtoA=1.5, Image=True, Dump=False)
 
-for t in np.arange(0,200,20):
-    prune_set(t)
-#prune_set(0)
+#for t in np.arange(0,400,10):
+#    prune_set(t)
+prune_set(0, do2d=False, do3d=True)
 #prune_timeseries()
