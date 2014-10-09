@@ -54,13 +54,13 @@ def prune_set(time=None, do2d=True, do3d=False):
                 for seed in run_seed:
                     stub = type+str(dim)+"d"+str(size)
                     folder = run_dir#+"/"+stub
-                    file = folder+"/"+stub+"_s"+str(seed)+"_"+post+".tar"
+                    file = folder+"/"+stub+"/"+stub+"_s"+str(seed)+"_"+post+".tar"
 
                     #file2 = folder+"/bpoutput/"+stub+"_s"+str(seed)+"_"+post+".tar"
 
                     ftype = 'tar'
                     if not isfile(file):
-                        file = folder+"/"+stub+"_s"+str(seed)+"_"+post+".plas"
+                        file = folder+"/"+stub+"/"+stub+"_s"+str(seed)+"_"+post+".plas"
                         ftype = 'plas'
                         if not isfile(file):
                             print "Could not find (skipping) ", file
@@ -207,5 +207,5 @@ def slice_one_3d(file):
 
 #for t in np.arange(0,400,10):
 #    prune_set(t)
-prune_set(0, do2d=True, do3d=False)
+prune_set(None, do2d=True, do3d=False)
 #prune_timeseries()

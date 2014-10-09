@@ -1,20 +1,20 @@
-import PlasticitySystem
-import FieldInitializer
-import FieldDynamics
-import FieldMover
-import Observer
-from Constants import *
+from Plasticity import PlasticitySystem
+from Plasticity.FieldInitializers import FieldInitializer
+from Plasticity.FieldDynamics import FieldDynamics
+from Plasticity.FieldMovers import FieldMover
+from Plasticity.Observers import Observer
+from Plasticity.Constants import *
 #from CUDAGridArray import GridArray
-import GridArray
-import NumericalMethods
-import CentralUpwindHJBetaPGlideOnlyDynamics
+#import GridArray
+#import NumericalMethods
+from Plasticity.FieldDynamics import CentralUpwindHJBetaPGlideOnlyDynamics
 
 import sys
 import os
 import getopt
 
 def Relaxation(seed):
-    N = 128 #256
+    N = 32
     gridShape = (N,N)
     
     dynamics = CentralUpwindHJBetaPGlideOnlyDynamics.BetaPDynamics()

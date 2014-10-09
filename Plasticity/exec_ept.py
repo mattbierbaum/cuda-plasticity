@@ -1,9 +1,9 @@
 from optparse import OptionParser
 import Plasticity.RunCUDA as run
 
-dct = {"cudadir": "/b/bierbaum/cuda-plasticity/", 
-       "homedir": "/b/bierbaum/plasticity/", 
-       "N":       1024,
+dct = {"cudadir": "/home/m-bierbaum/projects/cuda-plasticity/", 
+       "homedir": "/media/scratch/tmp/",
+       "N":       256,
        "dim":      2, 
        "previous": "", 
        "postfix":  "r", 

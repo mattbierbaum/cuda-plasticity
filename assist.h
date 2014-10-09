@@ -176,6 +176,7 @@ ContinueWriteMatrix(
 
     fwrite (&tag, 1, sizeof(data_type), matrix_fp);
     fwrite (matrix, 1, M_SIZE * sizeof (data_type), matrix_fp);
+    fflush (matrix_fp);
 
 	if (!if_silent) {
 	    fprintf (stdout, "Written contents of matrix:\n");
